@@ -16,22 +16,25 @@ def check_input_wraps(params_list):
     '''
     装饰器:检验用户输入的参数是否为空
     return: 1 检验成功 0 检验失败
-    return: 当前请求方式 GET 或者 POST
     '''
     def wrapper(func):
         @wraps(func)
         def check_input(*args, **kwargs):
-            if flask.request.method == 'GET':
-                return func('GET', 1)
-            elif flask.request.method == 'POST':
-                res_list = []
-                for params in params_list:
+            res_list = []
+            for params in params_list:
+                if flask.request.method == 'GET':
+                    params = flask.request.args.get(params)
+                    if params:
+                        res_list.append(params)
+                    else:
+                        return func(0)
+                if flask.request.method == 'POST':
                     params = flask.request.form.get(params)
                     if params:
                         res_list.append(params)
                     else:
-                        return func('POST', 0)
-            return func('POST', 1)
+                        return func(0)
+            return func(1)
         return check_input
     return wrapper
 
@@ -70,7 +73,7 @@ def page_not_found(e):
 
 @app.route('/register', methods=['GET', 'POST'])
 @check_input_wraps(['username', 'age', 'password'])
-def register_user(method, wrap_res):
+def register(wrap_res):
     '''
         注册 ,使用装饰器对用户输入信息进行检测
         根据请求方式返回对应页面
@@ -78,9 +81,7 @@ def register_user(method, wrap_res):
         get:返回register页面
         post:注册成功返回login页面 注册失败或其他错误返回tips_page页面
     '''
-    if method == 'GET':
-        return flask.render_template('register.html')
-    elif method == 'POST':
+    if flask.request.method == 'POST':
         if wrap_res:
             username = flask.request.form.get('username', default=None)
             age = flask.request.form.get('age', default=None)
@@ -93,11 +94,13 @@ def register_user(method, wrap_res):
                     flask.session['username'] = username
                     return resp
                 else:
-                    return flask.render_template('tips_page.html', name=username, res='注册失败')
+                    return flask.render_template('register.html', res='注册失败')
             else:
-                return flask.render_template('tips_page.html', name=username, res='已存在')
+                return flask.render_template('register.html', res='{}已存在'.format(username))
         else:
-            return flask.render_template('tips_page.html', name='请输入正确的', res='参数')
+            return flask.render_template('register.html', res='请输入正确的信息')
+    elif flask.request.method == 'GET':
+        return flask.render_template('register.html')
 
 
 def check_user(username):
@@ -161,15 +164,13 @@ def insert_db(username, age, password):
 
 @app.route('/login', methods=['GET', 'POST'])
 @check_input_wraps(['username', 'password'])
-def login(method, wrap_res):
+def login(wrap_res):
     '''
         登录 ,使用装饰器对用户输入的信息进行检测;
         params: method 当前请求方式,wrap_res 装饰器检测结果 1 通过检测 0 有空值
         return: get请求放回login页面 post请求返回tips_page页面
     '''
-    if method == 'GET':
-        return flask.render_template('login.html')
-    elif method == 'POST':
+    if flask.request.method == 'POST':
         if wrap_res:
             username = flask.request.form.get('username', default=None)
             password = flask.request.form.get('password', default=None)
@@ -180,9 +181,11 @@ def login(method, wrap_res):
                 flask.session['username'] = username
                 return resp
             else:
-                return flask.render_template('tips_page.html', name='用户名或密码', res='输入错误')
+                return flask.render_template('login.html', res='用户名或密码输入错误')
         else:
-            return flask.render_template('tips_page.html', name='请输入正确的', res='参数')
+            return flask.render_template('login.html', res='请输入正确的参数')
+    elif flask.request.method == 'GET':
+        return flask.render_template('login.html')
 
 
 def check_user_pass(username, password):
@@ -214,13 +217,13 @@ def loginsuccess():
     '''
         登录或注册成功,验证权限成功之后跳转页面
     '''
-    name = flask.session['username']
-    return flask.render_template('login_success.html', name=name, res='登录成功')
+    username = flask.session['username']
+    return flask.render_template('login_success.html', res='{}登录成功'.format(username))
 
 
-@app.route('/userinfo', methods=['GET'])
+@app.route('/students', methods=['GET'])
 @check_power
-def userinfo():
+def students():
     '''
         验证权限之后跳转到用户页面,显示用户id,name,age,passwd
     '''
@@ -232,7 +235,7 @@ def userinfo():
     data = cursor.fetchall()
     cursor.close()
     conn.close()
-    return flask.render_template('user_info.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
+    return flask.render_template('students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
 
 
 @app.route('/carinfo', methods=['GET'])
@@ -241,7 +244,7 @@ def carinfo():
     '''
         验证权限之后跳转到购物车页面
     '''
-    return flask.render_template('car_info.html')
+    return flask.render_template('carinfo.html')
 
 
 @app.route('/logout', methods=['GET'])
@@ -251,6 +254,38 @@ def logout():
     '''
     flask.session.pop('username', None)
     return flask.redirect('/')
+
+
+@app.route('/shoppingcart', methods=['GET'])
+@check_power
+@check_input_wraps(['carname', 'price'])
+def shoppingcart(wraps_res):
+    if wraps_res:
+        carname = flask.request.args.get('carname')
+        price = flask.request.args.get('price')
+        username = flask.session['username']
+        conn = mysql.connector.connect(
+            host='127.0.0.1', user='root', passwd='123123', database='test')
+        cursor = conn.cursor()
+        sql = 'select id from students where name = %s'
+        try:
+            cursor.execute(sql, [username])
+            data = cursor.fetchall()[0][0]
+        except Exception as e:
+            print(e)
+            return flask.render_template('carinfo.html', res='用户id不存在')
+        try:
+            sql = 'insert into carinfo (studentid,carname,price) values (%s,%s,%s)'
+            cursor.execute(sql, [data, carname, price])
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            return flask.render_template('carifno.html', res='添加失败')
+        cursor.close()
+        conn.close()
+        return flask.render_template('carinfo.html', res='购物车添加成功')
+    else:
+        return flask.render_template('carinfo.html', res='输入信息不能为空')
 
 
 if __name__ == '__main__':
