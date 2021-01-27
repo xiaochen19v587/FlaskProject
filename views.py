@@ -256,13 +256,18 @@ def logout():
     return flask.redirect('/')
 
 
-@app.route('/shoppingcart', methods=['GET'])
+@app.route('/shoppingcart', methods=['GET', 'POST'])
 @check_power
 @check_input_wraps(['carname', 'price'])
 def shoppingcart(wraps_res):
-    if wraps_res:
-        carname = flask.request.args.get('carname')
-        price = flask.request.args.get('price')
+    '''
+        添加用户购物车,check_power装饰器验证用户权限,check_input_wraps装饰器验证用户输入信息是否为空
+        params:wraps_res check_input_wraps装饰器返回值(1 验证成功输入不为空 0 验证失败输入为空)
+        return:返回cartinfo页面
+    '''
+    if wraps_res and flask.request.method == 'POST':
+        carname = flask.request.form.get('carname')
+        price = flask.request.form.get('price')
         username = flask.session['username']
         conn = mysql.connector.connect(
             host='127.0.0.1', user='root', passwd='123123', database='test')
@@ -286,6 +291,38 @@ def shoppingcart(wraps_res):
         return flask.render_template('carinfo.html', res='购物车添加成功')
     else:
         return flask.render_template('carinfo.html', res='输入信息不能为空')
+
+
+@app.route('/carts', methods=['GET', 'POST'])
+@check_power
+def carts():
+    '''
+        显示当前登录用户的购物车信息,check_power装饰器验证用户权限
+        return:返回carts页面,用于显示用户购物车信息
+    '''
+    username = flask.session['username']
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursor = conn.cursor()
+    try:
+        sql = 'select id from students where name=%s'
+        cursor.execute(sql, [username])
+        id = cursor.fetchall()[0][0]
+    except Exception as e:
+        print(e)
+        return flask.render_template('carts.html', res='查询id失败')
+    try:
+        sql = 'select carname,price from carinfo where studentid=%s'
+        cursor.execute(sql, [id])
+        data = cursor.fetchall()
+    except:
+        return flask.render_template('cars.html', res='查询信息失败')
+    cursor.close()
+    conn.close()
+    if data:
+        return flask.render_template('carts.html', res=data)
+    else:
+        return flask.render_template('carinfo.html', res='当前购物车信息为空')
 
 
 if __name__ == '__main__':
