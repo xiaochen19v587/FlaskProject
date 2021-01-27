@@ -12,7 +12,7 @@ app.secret_key = os.urandom(16)
 app.config['JSON_AS_ASCII'] = False
 
 
-def check_input_mraps(params_list):
+def check_input_wraps(params_list):
     '''
     装饰器:检验用户输入的参数是否为空
     return: 1 检验成功 0 检验失败
@@ -69,11 +69,12 @@ def page_not_found(e):
 
 
 @app.route('/register', methods=['GET', 'POST'])
-@check_input_mraps(['username', 'age', 'password'])
+@check_input_wraps(['username', 'age', 'password'])
 def register_user(method, wrap_res):
     '''
         注册 ,使用装饰器对用户输入信息进行检测
         根据请求方式返回对应页面
+        params:method 请求方式(get,post) wrap_res check_input_wraps装饰器返回的验证结果(1 验证成功 0 验证失败)
         get:返回register页面
         post:注册成功返回login页面 注册失败或其他错误返回tips_page页面
     '''
@@ -102,6 +103,7 @@ def register_user(method, wrap_res):
 def check_user(username):
     '''
         检测数据库中是否存在username;
+        params:username 用户输入的用户名
         return:0 已存在 1 不存在
     '''
     conn = mysql.connector.connect(
@@ -158,7 +160,7 @@ def insert_db(username, age, password):
 
 
 @app.route('/login', methods=['GET', 'POST'])
-@check_input_mraps(['username', 'password'])
+@check_input_wraps(['username', 'password'])
 def login(method, wrap_res):
     '''
         登录 ,使用装饰器对用户输入的信息进行检测;
@@ -206,7 +208,7 @@ def check_user_pass(username, password):
         return 0
 
 
-@app.route('/loginsuccess')
+@app.route('/loginsuccess', methods=['GET'])
 @check_power
 def loginsuccess():
     '''
@@ -249,11 +251,6 @@ def logout():
     '''
     flask.session.pop('username', None)
     return flask.redirect('/')
-
-
-@app.route('/senddate')
-def senddate():
-    return flask.jsonify({'status': '0', 'errmsg': '登录成功！'})
 
 
 if __name__ == '__main__':
