@@ -148,6 +148,7 @@ def insert_db(username, age, password):
     try:
         cursor.execute(sql, [username, age, password])
     except Exception as e:
+        print(e)
         conn.rollback()
         err = e
     else:
@@ -155,7 +156,6 @@ def insert_db(username, age, password):
         err = None
     cursor.close()
     conn.close()
-    print(err)
     if err:
         return 0
     else:
@@ -284,6 +284,7 @@ def shoppingcart(wraps_res):
             cursor.execute(sql, [data, cartname, price])
             conn.commit()
         except Exception as e:
+            print(e)
             conn.rollback()
             return flask.render_template('carifno.html', res='添加失败')
         cursor.close()
