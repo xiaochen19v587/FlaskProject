@@ -242,7 +242,7 @@ def students():
 @check_power
 def cartinfo():
     '''
-        验证权限之后跳转到购物车页面
+        权限验证成功之后跳转到购物车页面
     '''
     return flask.render_template('cartinfo.html')
 
@@ -256,9 +256,9 @@ def logout():
     return flask.redirect('/')
 
 
-@app.route('/shoppingcart', methods=['GET', 'POST'])
+@app.route('/cartinfo', methods=['POST'])
 @check_power
-@check_input_wraps(['carname', 'price'])
+@check_input_wraps(['cartname', 'price'])
 def shoppingcart(wraps_res):
     '''
         添加用户购物车,check_power装饰器验证用户权限,check_input_wraps装饰器验证用户输入信息是否为空
@@ -266,7 +266,7 @@ def shoppingcart(wraps_res):
         return:返回cartinfo页面
     '''
     if wraps_res and flask.request.method == 'POST':
-        carname = flask.request.form.get('carname')
+        cartname = flask.request.form.get('cartname')
         price = flask.request.form.get('price')
         username = flask.session['username']
         conn = mysql.connector.connect(
@@ -280,8 +280,8 @@ def shoppingcart(wraps_res):
             print(e)
             return flask.render_template('cartinfo.html', res='用户id不存在')
         try:
-            sql = 'insert into cartinfo (studentid,carname,price) values (%s,%s,%s)'
-            cursor.execute(sql, [data, carname, price])
+            sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
+            cursor.execute(sql, [data, cartname, price])
             conn.commit()
         except Exception as e:
             conn.rollback()
@@ -312,7 +312,7 @@ def carts():
         print(e)
         return flask.render_template('carts.html', res='查询id失败')
     try:
-        sql = 'select carname,price from cartinfo where studentid=%s'
+        sql = 'select cartname,price from cartinfo where studentid=%s'
         cursor.execute(sql, [id])
         data = cursor.fetchall()
     except Exception as e:
