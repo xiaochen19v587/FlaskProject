@@ -3,6 +3,7 @@ import mysql.connector
 import re
 import os
 import json
+import hashlib
 from functools import wraps
 
 app = flask.Flask(__name__)
@@ -83,6 +84,7 @@ def register_user(method, wrap_res):
             username = flask.request.form.get('username', default=None)
             age = flask.request.form.get('age', default=None)
             password = flask.request.form.get('password', default=None)
+            password = encryption_passwd(password)
             if check_user(username):
                 if insert_db(username, age, password):
                     resp = flask.make_response(flask.redirect('/loginsuccess'))
@@ -116,6 +118,18 @@ def check_user(username):
         return 1
 
 
+def encryption_passwd(password):
+    '''
+        对用户输入的登录密码进行加盐加密
+        params:password 用户输入的登录密码
+        return:password 加盐加密之后的密码
+    '''
+    passwd_m = hashlib.md5(b'xiaochen19v587')
+    passwd_m.update(password.encode('utf-8'))
+    password = passwd_m.hexdigest()
+    return password
+
+
 def insert_db(username, age, password):
     '''
         向数据库中插入数据;
@@ -136,6 +150,7 @@ def insert_db(username, age, password):
         err = None
     cursor.close()
     conn.close()
+    print(err)
     if err:
         return 0
     else:
@@ -156,6 +171,7 @@ def login(method, wrap_res):
         if wrap_res:
             username = flask.request.form.get('username', default=None)
             password = flask.request.form.get('password', default=None)
+            password = encryption_passwd(password)
             if check_user_pass(username, password):
                 resp = flask.make_response(flask.redirect('/loginsuccess'))
                 resp.set_cookie('username', username)
@@ -196,7 +212,8 @@ def loginsuccess():
     '''
         登录或注册成功,验证权限成功之后跳转页面
     '''
-    return flask.render_template('login_success.html')
+    name = flask.session['username']
+    return flask.render_template('login_success.html', name=name, res='登录成功')
 
 
 @app.route('/userinfo', methods=['GET'])
@@ -237,6 +254,7 @@ def logout():
 @app.route('/senddate')
 def senddate():
     return flask.jsonify({'status': '0', 'errmsg': '登录成功！'})
+
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000)
