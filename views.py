@@ -238,13 +238,13 @@ def students():
     return flask.render_template('students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
 
 
-@app.route('/carinfo', methods=['GET'])
+@app.route('/cartinfo', methods=['GET'])
 @check_power
-def carinfo():
+def cartinfo():
     '''
         验证权限之后跳转到购物车页面
     '''
-    return flask.render_template('carinfo.html')
+    return flask.render_template('cartinfo.html')
 
 
 @app.route('/logout', methods=['GET'])
@@ -278,9 +278,9 @@ def shoppingcart(wraps_res):
             data = cursor.fetchall()[0][0]
         except Exception as e:
             print(e)
-            return flask.render_template('carinfo.html', res='用户id不存在')
+            return flask.render_template('cartinfo.html', res='用户id不存在')
         try:
-            sql = 'insert into carinfo (studentid,carname,price) values (%s,%s,%s)'
+            sql = 'insert into cartinfo (studentid,carname,price) values (%s,%s,%s)'
             cursor.execute(sql, [data, carname, price])
             conn.commit()
         except Exception as e:
@@ -288,9 +288,9 @@ def shoppingcart(wraps_res):
             return flask.render_template('carifno.html', res='添加失败')
         cursor.close()
         conn.close()
-        return flask.render_template('carinfo.html', res='购物车添加成功')
+        return flask.render_template('cartinfo.html', res='购物车添加成功')
     else:
-        return flask.render_template('carinfo.html', res='输入信息不能为空')
+        return flask.render_template('cartinfo.html', res='输入信息不能为空')
 
 
 @app.route('/carts', methods=['GET', 'POST'])
@@ -312,17 +312,18 @@ def carts():
         print(e)
         return flask.render_template('carts.html', res='查询id失败')
     try:
-        sql = 'select carname,price from carinfo where studentid=%s'
+        sql = 'select carname,price from cartinfo where studentid=%s'
         cursor.execute(sql, [id])
         data = cursor.fetchall()
-    except:
-        return flask.render_template('cars.html', res='查询信息失败')
+    except Exception as e:
+        print(e)
+        return flask.render_template('carts.html', res='查询信息失败')
     cursor.close()
     conn.close()
     if data:
         return flask.render_template('carts.html', res=data)
     else:
-        return flask.render_template('carinfo.html', res='当前购物车信息为空')
+        return flask.render_template('cartinfo.html', res='当前购物车信息为空')
 
 
 if __name__ == '__main__':
