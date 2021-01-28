@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+/register           GET:返回user/register.html页面                  POST:处理用户输入信息进行注册
+/login              GET:返回user/login.html页面                     POST:处理用户输入信息进行登录
+/loginsuccess       GET:返回user/login_sunccess.html页面
+/students           GET:返回user/students.html页面
+/logout             GET:重定向到/,删除session
+/INSERT/cartinfo    GET:返回cart/cartinfo.html                     POST:处理用户输入信息将信息插入到数据库中
+/carts              GET:返回carts.html页面,显示用户购物车中的信息
+/logoff             GET:重定向到/,修改用户isalive字段为注销状态1 删除session
+/DELETE/cartinfo/   GET:重定向到/carts,删除对应id的购物车信息
+/UPDATE/userinfo    GET:返回update_info.html页面                    POST:处理用户输入信息,对用户数据进行修改
+/UPDATE/password    GET:返回update_passwd.html页面                  POST:处理用户输入信息,对用户数据进行修改
+'''
 import flask
 import mysql.connector
 import re
@@ -54,7 +69,7 @@ def _check_power(func):
 
 
 @app.route('/', methods=['GET'])
-def hello_world():
+def index():
     '''
         请求路由为/,返回register页面
     '''
@@ -185,7 +200,6 @@ def login(wrap_res):
             elif __check_user_pass(username, password) == 2:
                 return flask.render_template('user/login.html', res='用户已注销')
             else:
-                print(password)
                 return flask.render_template('user/login.html', res='用户名或密码输入错误')
         else:
             return flask.render_template('user/login.html', res='请输入正确的参数')
@@ -218,7 +232,7 @@ def __check_user_pass(username, password):
         return 0
 
 
-@app.route('/loginsuccess', methods=['GET'])
+@app.route('/loginsuccess', methods=['GET', 'POST'])
 @_check_power
 def loginsuccess():
     '''
@@ -228,7 +242,7 @@ def loginsuccess():
     return flask.render_template('user/login_success.html', res='{}登录成功'.format(username))
 
 
-@app.route('/students', methods=['GET'])
+@app.route('/students', methods=['GET', 'POST'])
 @_check_power
 def students():
     '''
