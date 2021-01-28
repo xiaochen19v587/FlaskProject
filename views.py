@@ -150,13 +150,12 @@ def __insert_db(username, age, password):
     sql = 'insert into students (name,age,password) values (%s,%s,%s)'
     try:
         cursor.execute(sql, [username, age, password])
+        conn.commit()
+        err = None
     except Exception as e:
         print(e)
         conn.rollback()
         err = e
-    else:
-        conn.commit()
-        err = None
     cursor.close()
     conn.close()
     if err:
@@ -186,6 +185,7 @@ def login(wrap_res):
             elif __check_user_pass(username, password) == 2:
                 return flask.render_template('user/login.html', res='用户已注销')
             else:
+                print(password)
                 return flask.render_template('user/login.html', res='用户名或密码输入错误')
         else:
             return flask.render_template('user/login.html', res='请输入正确的参数')
@@ -238,11 +238,14 @@ def students():
         host='127.0.0.1', user='root', passwd='123123', database='test')
     cursor = conn.cursor()
     sql = 'select * from students where name = %s'
-    cursor.execute(sql, [flask.session['username']])
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return flask.render_template('user/students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
+    try:
+        cursor.execute(sql, [flask.session['username']])
+        data = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return flask.render_template('user/students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
+    except:
+        return flask.redirect(flask.url_for('login'))
 
 
 @app.route('/logout', methods=['GET'])
@@ -373,6 +376,123 @@ def delete_carts():
     cursor.close()
     conn.close()
     return flask.redirect(flask.url_for('carts'))
+
+
+@app.route('/UPDATE/userinfo', methods=['GET', 'POST'])
+@_check_power
+@_check_input_wraps(['username', 'age'])
+def update_userinfo(wraps_res):
+    '''
+        修改用户信息,验证用户输入信息,get请求返回update_info.html,post请求修改用户信息
+        return: 重定向到students
+    '''
+    if flask.request.method == 'GET':
+        return flask.render_template('user/update_info.html')
+    elif flask.request.method == 'POST':
+        if not wraps_res:
+            return flask.render_template('user/update_info.html', res='输入信息不能为空')
+        username = flask.request.form.get('username')
+        age = flask.request.form.get('age')
+        conn = mysql.connector.connect(
+            host='127.0.0.1', user='root', passwd='123123', database='test')
+        cursor = conn.cursor()
+        sql = 'select id from students where name = %s'
+        try:
+            cursor.execute(sql, [flask.session['username']])
+            id = cursor.fetchall()[0][0]
+        except Exception as e:
+            print(e)
+        sql = 'update students set name = %s, age = %s where id =%s'
+        try:
+            cursor.execute(sql, [username, age, id])
+            conn.commit()
+        except Exception as e:
+            print(e)
+            conn.rollback()
+            return flask.render_template('user/update_info.html', res='请输入正确的信息')
+        cursor.close()
+        conn.close()
+        flask.session['username'] = username
+        return flask.redirect(flask.url_for('students'))
+
+
+@app.route('/UPDATE/password', methods=['GET', 'POST'])
+@_check_power
+@_check_input_wraps(['old_password', 'new_password1', 'new_password2'])
+def update_passwd(wraps_res):
+    '''
+        修改用户登录密码,get请求返回update_passwd.html页面,post请求修改密码
+        return: 返回对应的页面
+    '''
+    if flask.request.method == 'GET':
+        return flask.render_template('user/update_passwd.html')
+    elif flask.request.method == 'POST':
+        if wraps_res:
+            old_password = flask.request.form.get('old_password')
+            new_password1 = flask.request.form.get('new_password1')
+            new_password2 = flask.request.form.get('new_password2')
+            check_update_res = _check_update_passwd(
+                old_password, new_password1, new_password2)
+            if check_update_res == 1:
+                flask.session.pop('username', None)
+                return flask.redirect(flask.url_for('login'))
+            elif check_update_res == 2:
+                res = '查询用户失败'
+            elif check_update_res == 3:
+                res = '输入的原密码不正确'
+            elif check_update_res == 4:
+                res = '两次输入的新密码不正确'
+            elif check_update_res == 5:
+                res = '修改密码失败'
+            elif check_update_res == 6:
+                res = '新密码和旧密码相同'
+            return flask.render_template('user/update_passwd.html', res=res)
+        else:
+            return flask.render_template('user/update_passwd.html', res='输入信息不能为空')
+
+
+def _check_update_passwd(old_password, new_password1, new_password2):
+    '''
+        检测用户输入的新旧密码是否符合条件
+        return: 1 修改成功 2 查询用户失败 3 旧密码输入不正确 4 两次新密码输入不一致 5 修改密码失败 6 新密码和旧密码相同
+    '''
+    if new_password1 != new_password2:
+        # 两次新密码不一致
+        return 4
+    old_password = __encryption_string(old_password)
+    if __encryption_string(new_password1) == old_password:
+        # 新旧密码相同
+        return 6
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursor = conn.cursor()
+    sql = 'select password from students where name = %s'
+    try:
+        cursor.execute(sql, [flask.session['username']])
+        password = cursor.fetchall()[0][0]
+        if password == old_password:
+            # 修改密码
+            sql = 'update students set password = %s where name = %s'
+            try:
+                cursor.execute(sql, [__encryption_string(
+                    new_password1), flask.session['username']])
+                conn.commit()
+            except Exception as e:
+                print(e)
+                # 修改密码失败
+                return 5
+            cursor.close()
+            conn.close()
+            return 1
+        else:
+            # 密码不匹配
+            return 3
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(e)
+        # 查询用户失败
+        return 2
 
 
 if __name__ == '__main__':

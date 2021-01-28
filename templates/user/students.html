@@ -1,5 +1,11 @@
 <h3>students</h3>
-<h5>{{ id }} {{ name }} {{ age }} {{ password }}</h5>
+<h5>{{ id }} {{ name }} {{ age }}</h5>
+<form action="/UPDATE/userinfo" method="GET">
+    <input type="submit" value="修改个人信息">
+</form>
+<form action="/UPDATE/password" method="GET">
+    <input type="submit" value="修改密码">
+</form>
 <form action="/loginsuccess" method="GET">
     <input type="submit" value="主页" />
 </form>
