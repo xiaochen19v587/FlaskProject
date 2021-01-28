@@ -53,7 +53,7 @@ def check_power(func):
     return wrapper
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def hello_world():
     '''
         请求路由为/,返回register页面
@@ -178,11 +178,13 @@ def login(wrap_res):
             username = flask.request.form.get('username', default=None)
             password = flask.request.form.get('password', default=None)
             password = encryption_passwd(password)
-            if check_user_pass(username, password):
+            if check_user_pass(username, password) == 1:
                 resp = flask.make_response(flask.redirect('/loginsuccess'))
                 resp.set_cookie('username', username)
                 flask.session['username'] = username
                 return resp
+            elif check_user_pass(username, password) == 2:
+                return flask.render_template('login.html', res='用户已注销')
             else:
                 return flask.render_template('login.html', res='用户名或密码输入错误')
         else:
@@ -195,7 +197,7 @@ def check_user_pass(username, password):
     '''
         检测用户名和密码是否匹配
         params: username 用户输入的用户名, passwrod 用户输入的密码
-        return: 1 用户名和密码匹配成功 0 用户名和密码匹配失败
+        return: 1 用户名和密码匹配成功 0 用户名和密码匹配失败 2 当前用户已经注销
     '''
     conn = mysql.connector.connect(
         host='127.0.0.1', user='root', passwd='123123', database='test')
@@ -208,7 +210,9 @@ def check_user_pass(username, password):
         conn.close()
         if user_pass[0][0] == password and user_pass[0][1] == 0:
             return 1
-        else:
+        elif user_pass[0][1] == 1:
+            return 2
+        elif user_pass[0][0] != password:
             return 0
     except:
         return 0
@@ -317,7 +321,7 @@ def carts():
         print(e)
         return flask.render_template('carts.html', res='查询用户失败')
     try:
-        sql = 'select cartname,price from cartinfo where studentid=%s'
+        sql = 'select cartname,price from cartinfo where studentid = %s'
         cursor.execute(sql, [id])
         data = cursor.fetchall()
     except Exception as e:
@@ -331,14 +335,18 @@ def carts():
         return flask.render_template('cartinfo.html', res='当前购物车信息为空')
 
 
-@app.route('/logoff', methods=['GET', 'POST'])
+@app.route('/logoff', methods=['GET'])
 @check_power
 def logoff():
+    '''
+        用户注销功能,修改用户数据表中对应用户的isalive字段为1,并删除session
+        return:重定向到首页(/)
+    '''
     username = flask.session['username']
     conn = mysql.connector.connect(
         host='127.0.0.1', user='root', passwd='123123', database='test')
     cursor = conn.cursor()
-    sql = 'update students set isalive=1 where name=%s'
+    sql = 'update students set isalive = 1 where name = %s'
     try:
         cursor.execute(sql, [username])
         flask.session.pop('username', None)
