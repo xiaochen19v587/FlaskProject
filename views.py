@@ -59,8 +59,8 @@ def hello_world():
         请求路由为/,返回register页面
     '''
     if 'username' in flask.session:
-        return flask.render_template('tips_page.html', name='', res='You are login')
-    return flask.render_template('tips_page.html', name='', res='You are not logged in')
+        return flask.render_template('index.html', name='', res='You are login')
+    return flask.render_template('index.html', name='', res='You are not logged in')
 
 
 @app.errorhandler(404)
@@ -94,13 +94,13 @@ def register(wrap_res):
                     flask.session['username'] = username
                     return resp
                 else:
-                    return flask.render_template('register.html', res='注册失败')
+                    return flask.render_template('user/register.html', res='注册失败')
             else:
-                return flask.render_template('register.html', res='{}已存在'.format(username))
+                return flask.render_template('user/register.html', res='{}已存在'.format(username))
         else:
-            return flask.render_template('register.html', res='请输入正确的信息')
+            return flask.render_template('user/register.html', res='请输入正确的信息')
     elif flask.request.method == 'GET':
-        return flask.render_template('register.html')
+        return flask.render_template('user/register.html')
 
 
 def __check_user(username):
@@ -184,13 +184,13 @@ def login(wrap_res):
                 flask.session['username'] = username
                 return resp
             elif __check_user_pass(username, password) == 2:
-                return flask.render_template('login.html', res='用户已注销')
+                return flask.render_template('user/login.html', res='用户已注销')
             else:
-                return flask.render_template('login.html', res='用户名或密码输入错误')
+                return flask.render_template('user/login.html', res='用户名或密码输入错误')
         else:
-            return flask.render_template('login.html', res='请输入正确的参数')
+            return flask.render_template('user/login.html', res='请输入正确的参数')
     elif flask.request.method == 'GET':
-        return flask.render_template('login.html')
+        return flask.render_template('user/login.html')
 
 
 def __check_user_pass(username, password):
@@ -225,7 +225,7 @@ def loginsuccess():
         登录或注册成功,验证权限成功之后跳转页面
     '''
     username = flask.session['username']
-    return flask.render_template('login_success.html', res='{}登录成功'.format(username))
+    return flask.render_template('user/login_success.html', res='{}登录成功'.format(username))
 
 
 @app.route('/students', methods=['GET'])
@@ -242,7 +242,7 @@ def students():
     data = cursor.fetchall()
     cursor.close()
     conn.close()
-    return flask.render_template('students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
+    return flask.render_template('user/students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
 
 
 @app.route('/logout', methods=['GET'])
@@ -277,7 +277,7 @@ def shoppingcart(wraps_res):
             data = cursor.fetchall()[0][0]
         except Exception as e:
             print(e)
-            return flask.render_template('cartinfo.html', res='用户id不存在')
+            return flask.render_template('cart/cartinfo.html', res='用户id不存在')
         try:
             sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
             cursor.execute(sql, [data, cartname, price])
@@ -288,11 +288,11 @@ def shoppingcart(wraps_res):
             return flask.render_template('carifno.html', res='添加失败')
         cursor.close()
         conn.close()
-        return flask.render_template('cartinfo.html', res='购物车添加成功')
+        return flask.render_template('cart/cartinfo.html', res='购物车添加成功')
     elif flask.request.method == 'GET':
-        return flask.render_template('cartinfo.html')
+        return flask.render_template('cart/cartinfo.html')
     else:
-        return flask.render_template('cartinfo.html', res='输入信息不能为空')
+        return flask.render_template('cart/cartinfo.html', res='输入信息不能为空')
 
 
 @app.route('/carts', methods=['GET', 'POST'])
@@ -312,20 +312,20 @@ def carts():
         user_id = cursor.fetchall()[0][0]
     except Exception as e:
         print(e)
-        return flask.render_template('carts.html', res='查询用户失败')
+        return flask.render_template('cart/carts.html', res='查询用户失败')
     try:
         sql = 'select cartid,cartname,price from cartinfo where studentid = %s'
         cursor.execute(sql, [user_id])
         data = cursor.fetchall()
     except Exception as e:
         print(e)
-        return flask.render_template('carts.html', res='查询信息失败')
+        return flask.render_template('cart/carts.html', res='查询信息失败')
     cursor.close()
     conn.close()
     if data:
-        return flask.render_template('carts.html', res='{}用户的购物车'.format(flask.session['username']), data=data)
+        return flask.render_template('cart/carts.html', res='{}用户的购物车'.format(flask.session['username']), data=data)
     else:
-        return flask.render_template('carts.html', res='当前购物车信息为空')
+        return flask.render_template('cart/carts.html', res='当前购物车信息为空')
 
 
 @app.route('/logoff', methods=['GET'])
@@ -347,13 +347,13 @@ def logoff():
     except Exception as e:
         print(e)
         conn.rollback()
-        return flask.render_template('login_success.html', res='注销失败')
+        return flask.render_template('user/login_success.html', res='注销失败')
     cursor.close()
     conn.close()
     return flask.redirect('/')
 
 
-@app.route('/DELETE/carts/')
+@app.route('/DELETE/cartinfo/')
 def delete_carts():
     cartid = flask.request.args.get('cartid')
     conn = mysql.connector.connect(
