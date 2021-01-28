@@ -49,7 +49,7 @@ def _check_power(func):
         if 'username' in flask.session:
             return func(*args, **kwargs)
         else:
-            return flask.redirect('/login')
+            return flask.redirect(flask.url_for('login'))
     return wrapper
 
 
@@ -89,7 +89,7 @@ def register(wrap_res):
             password = __encryption_string(password)
             if __check_user(username):
                 if __insert_db(username, age, password):
-                    resp = flask.make_response(flask.redirect('/loginsuccess'))
+                    resp = flask.make_response(flask.redirect('loginsuccess'))
                     resp.set_cookie('username', username)
                     flask.session['username'] = username
                     return resp
@@ -179,7 +179,7 @@ def login(wrap_res):
             password = flask.request.form.get('password', default=None)
             password = __encryption_string(password)
             if __check_user_pass(username, password) == 1:
-                resp = flask.make_response(flask.redirect('/loginsuccess'))
+                resp = flask.make_response(flask.redirect('loginsuccess'))
                 resp.set_cookie('username', username)
                 flask.session['username'] = username
                 return resp
@@ -342,7 +342,6 @@ def logoff():
     sql = 'update students set isalive = 1 where name = %s'
     try:
         cursor.execute(sql, [username])
-        flask.session.pop('username', None)
         conn.commit()
     except Exception as e:
         print(e)
@@ -350,11 +349,16 @@ def logoff():
         return flask.render_template('user/login_success.html', res='注销失败')
     cursor.close()
     conn.close()
-    return flask.redirect('/')
+    return flask.redirect(flask.url_for('logout'))
 
 
-@app.route('/DELETE/cartinfo/')
+@app.route('/DELETE/cartinfo/', methods=['GET'])
+@_check_power
 def delete_carts():
+    '''
+        删除对应id的购物车信息,验证当前用户权限,获取url参数cartid,删除对应cartid数据
+        return: 重定向到/carts
+    '''
     cartid = flask.request.args.get('cartid')
     conn = mysql.connector.connect(
         host='127.0.0.1', user='root', passwd='123123', database='test')
@@ -365,9 +369,10 @@ def delete_carts():
         conn.commit()
     except:
         conn.rollback()
+        return flask.render_template('cart/carts.html', res='删除失败')
     cursor.close()
     conn.close()
-    return flask.redirect('/carts')
+    return flask.redirect(flask.url_for('carts'))
 
 
 if __name__ == '__main__':
