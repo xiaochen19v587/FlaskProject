@@ -132,6 +132,9 @@ def encryption_passwd(password):
     passwd_m = hashlib.md5(b'xiaochen19v587')
     passwd_m.update(password.encode('utf-8'))
     password = passwd_m.hexdigest()
+    password_m2 = hashlib.md5(b'password')
+    password_m2.update(password.encode('utf-8'))
+    password = password_m2.hexdigest()
     return password
 
 
@@ -197,13 +200,13 @@ def check_user_pass(username, password):
     conn = mysql.connector.connect(
         host='127.0.0.1', user='root', passwd='123123', database='test')
     cursor = conn.cursor()
-    sql = 'select password from students where name = %s'
+    sql = 'select password, isalive from students where name = %s'
     try:
         cursor.execute(sql, [username])
         user_pass = cursor.fetchall()
         cursor.close()
         conn.close()
-        if user_pass[0][0] == password:
+        if user_pass[0][0] == password and user_pass[0][1] == 0:
             return 1
         else:
             return 0
@@ -238,6 +241,16 @@ def students():
     return flask.render_template('students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
 
 
+@app.route('/logout', methods=['GET'])
+@check_power
+def logout():
+    '''
+        用户退出,删除seesion中的username
+    '''
+    flask.session.pop('username', None)
+    return flask.redirect('/')
+
+
 @app.route('/cartinfo', methods=['GET'])
 @check_power
 def cartinfo():
@@ -245,15 +258,6 @@ def cartinfo():
         权限验证成功之后跳转到购物车页面
     '''
     return flask.render_template('cartinfo.html')
-
-
-@app.route('/logout', methods=['GET'])
-def logout():
-    '''
-        用户退出,删除seesion中的username
-    '''
-    flask.session.pop('username', None)
-    return flask.redirect('/')
 
 
 @app.route('/cartinfo', methods=['POST'])
@@ -311,7 +315,7 @@ def carts():
         id = cursor.fetchall()[0][0]
     except Exception as e:
         print(e)
-        return flask.render_template('carts.html', res='查询id失败')
+        return flask.render_template('carts.html', res='查询用户失败')
     try:
         sql = 'select cartname,price from cartinfo where studentid=%s'
         cursor.execute(sql, [id])
@@ -325,6 +329,29 @@ def carts():
         return flask.render_template('carts.html', res=data)
     else:
         return flask.render_template('cartinfo.html', res='当前购物车信息为空')
+
+
+@app.route('/logoff', methods=['GET', 'POST'])
+@check_power
+def logoff():
+    username = flask.session['username']
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursor = conn.cursor()
+    sql = 'update students set isalive=1 where name=%s'
+    try:
+        cursor.execute(sql, [username])
+        flask.session.pop('username', None)
+    except Exception as e:
+        print(e)
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return flask.render_template('login_success.html', res='注销失败')
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return flask.redirect('/')
 
 
 if __name__ == '__main__':
