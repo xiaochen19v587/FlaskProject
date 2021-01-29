@@ -259,7 +259,7 @@ def userinfo():
         conn.close()
         return flask.render_template('user/userinfo.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
     except:
-        return flask.redirect(flask.url_for('login'))
+        return flask.redirect('/user/login')
 
 
 @app.route('/user/logout', methods=['GET'])
@@ -364,7 +364,7 @@ def logoff():
         return flask.render_template('user/login_success.html', res='注销失败')
     cursor.close()
     conn.close()
-    return flask.redirect(flask.url_for('logout'))
+    return flask.redirect('/user/logout')
 
 
 @app.route('/cart/DELETE', methods=['GET'])
@@ -387,7 +387,7 @@ def delete_carts():
         return flask.render_template('cart/carts.html', res='删除失败')
     cursor.close()
     conn.close()
-    return flask.redirect(flask.url_for('carts'))
+    return flask.redirect('/carts')
 
 
 @app.route('/user/UPDATE/userinfo', methods=['GET', 'POST'])
@@ -404,6 +404,8 @@ def update_userinfo(wraps_res):
         if not wraps_res:
             return flask.render_template('user/update_info.html', res='输入信息不能为空')
         username = flask.request.form.get('username')
+        if not __check_user(username):
+            return flask.render_template('user/update_info.html', res='用户名已存在')
         age = flask.request.form.get('age')
         conn = mysql.connector.connect(
             host='127.0.0.1', user='root', passwd='123123', database='test')
@@ -425,7 +427,8 @@ def update_userinfo(wraps_res):
         cursor.close()
         conn.close()
         flask.session['username'] = username
-        return flask.redirect(flask.url_for('students'))
+        print(flask.session['username'])
+        return flask.redirect('/user/info')
 
 
 @app.route('/user/UPDATE/password', methods=['GET', 'POST'])
@@ -447,7 +450,7 @@ def update_passwd(wraps_res):
                 old_password, new_password1, new_password2)
             if check_update_res == 1:
                 flask.session.pop('username', None)
-                return flask.redirect(flask.url_for('login'))
+                return flask.redirect('/user/login')
             elif check_update_res == 2:
                 res = '查询用户失败'
             elif check_update_res == 3:
