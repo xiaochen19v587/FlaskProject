@@ -1,14 +1,14 @@
 <h4>{{ res }}</h4>
 {% for cartid,cartname,price in data %}
 <h5>{{cartname}} {{price}}</h5>
-<form action="/DELETE/cartinfo" method='GET'>
+<form action="/cart/DELETE" method='GET'>
     <input type="hidden" name="cartid" value="{{cartid}}">
     <input type="submit" value="删除">
 </form>
 {% endfor %}
-<form action="/INSERT/cartinfo" method="GET">
+<form action="/cart/INSERT" method="GET">
     <input type="submit" value="继续添加">
 </form>
-<form action="/loginsuccess" method="GET">
+<form action="/users" method="GET">
     <input type="submit" value="主页">
 </form>

@@ -1,13 +1,13 @@
 <!doctype html>
 <title>register</title>
 <h4>{{ res }}</h4>
-<form action="/register" method="POST">
+<form action="/user/register" method="POST">
     <p>username: <input type="text" name="username" /></p>
     <p>password: <input type="password" name="password" /></p>
     <p>age: <input type="text" name="age" /></p>
     <input type="submit" value="注册" />
 </form>
-<form action="/login" method="GET">
+<form action="/user/login" method="GET">
     <input type="submit" value="登录" />
 </form>
 <form action="/" method="GET">

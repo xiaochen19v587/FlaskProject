@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-/register           GET:返回user/register.html页面                  POST:处理用户输入信息进行注册
-/login              GET:返回user/login.html页面                     POST:处理用户输入信息进行登录
-/loginsuccess       GET:返回user/login_sunccess.html页面
-/students           GET:返回user/students.html页面
-/logout             GET:重定向到/,删除session
-/INSERT/cartinfo    GET:返回cart/cartinfo.html                     POST:处理用户输入信息将信息插入到数据库中
-/carts              GET:返回carts.html页面,显示用户购物车中的信息
-/logoff             GET:重定向到/,修改用户isalive字段为注销状态1 删除session
-/DELETE/cartinfo/   GET:重定向到/carts,删除对应id的购物车信息
-/UPDATE/userinfo    GET:返回update_info.html页面                    POST:处理用户输入信息,对用户数据进行修改
-/UPDATE/password    GET:返回update_passwd.html页面                  POST:处理用户输入信息,对用户数据进行修改
+/users                  GET:返回user/login_sunccess.html页面
+/user/info              GET:返回user/userinfo.html页面
+/user/register          GET:返回user/register.html页面                  POST:处理用户输入信息进行注册
+/user/login             GET:返回user/login.html页面                     POST:处理用户输入信息进行登录
+/user/logout            GET:重定向到/,删除session
+/user/logoff            GET:重定向到/,修改用户isalive字段为注销状态1 删除session
+/user/UPDATE/userinfo   GET:返回update_info.html页面                    POST:处理用户输入信息,对用户数据进行修改
+/user/UPDATE/password   GET:返回update_passwd.html页面                  POST:处理用户输入信息,对用户数据进行修改
+/carts                  GET:返回carts.html页面,显示用户购物车中的信息
+/cart/INSERT            GET:返回cart/cartinfo.html                      POST:处理用户输入信息将信息插入到数据库中
+/cart/DELETE            GET:重定向到/carts,删除对应id的购物车信息
 '''
 import flask
 import mysql.connector
@@ -57,14 +57,14 @@ def _check_input_wraps(params_list):
 def _check_power(func):
     '''
         装饰器:验证用户权限,判断'username'是否存在于session中
-        验证成功执行被装饰函数,验证失败重定向到/login
+        验证成功执行被装饰函数,验证失败重定向到/user/login
     '''
     @wraps(func)
     def wrapper(*args, **kwargs):
         if 'username' in flask.session:
             return func(*args, **kwargs)
         else:
-            return flask.redirect(flask.url_for('login'))
+            return flask.redirect('/user/login')
     return wrapper
 
 
@@ -86,7 +86,7 @@ def page_not_found(e):
     return flask.render_template('error/404.html'), 404
 
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/user/register', methods=['GET', 'POST'])
 @_check_input_wraps(['username', 'age', 'password'])
 def register(wrap_res):
     '''
@@ -104,7 +104,7 @@ def register(wrap_res):
             password = __encryption_string(password)
             if __check_user(username):
                 if __insert_db(username, age, password):
-                    resp = flask.make_response(flask.redirect('loginsuccess'))
+                    resp = flask.make_response(flask.redirect('/users'))
                     resp.set_cookie('username', username)
                     flask.session['username'] = username
                     return resp
@@ -179,7 +179,7 @@ def __insert_db(username, age, password):
         return 1
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/user/login', methods=['GET', 'POST'])
 @_check_input_wraps(['username', 'password'])
 def login(wrap_res):
     '''
@@ -193,7 +193,7 @@ def login(wrap_res):
             password = flask.request.form.get('password', default=None)
             password = __encryption_string(password)
             if __check_user_pass(username, password) == 1:
-                resp = flask.make_response(flask.redirect('loginsuccess'))
+                resp = flask.make_response(flask.redirect('/users'))
                 resp.set_cookie('username', username)
                 flask.session['username'] = username
                 return resp
@@ -232,9 +232,9 @@ def __check_user_pass(username, password):
         return 0
 
 
-@app.route('/loginsuccess', methods=['GET', 'POST'])
+@app.route('/users', methods=['GET', 'POST'])
 @_check_power
-def loginsuccess():
+def users():
     '''
         登录或注册成功,验证权限成功之后跳转页面
     '''
@@ -242,9 +242,9 @@ def loginsuccess():
     return flask.render_template('user/login_success.html', res='{}登录成功'.format(username))
 
 
-@app.route('/students', methods=['GET', 'POST'])
+@app.route('/user/info', methods=['GET', 'POST'])
 @_check_power
-def students():
+def userinfo():
     '''
         验证权限之后跳转到用户页面,显示用户id,name,age,passwd
     '''
@@ -257,12 +257,12 @@ def students():
         data = cursor.fetchall()
         cursor.close()
         conn.close()
-        return flask.render_template('user/students.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
+        return flask.render_template('user/userinfo.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
     except:
         return flask.redirect(flask.url_for('login'))
 
 
-@app.route('/logout', methods=['GET'])
+@app.route('/user/logout', methods=['GET'])
 @_check_power
 def logout():
     '''
@@ -272,7 +272,7 @@ def logout():
     return flask.redirect('/')
 
 
-@app.route('/INSERT/cartinfo', methods=['GET', 'POST'])
+@app.route('/cart/INSERT', methods=['GET', 'POST'])
 @_check_power
 @_check_input_wraps(['cartname', 'price'])
 def shoppingcart(wraps_res):
@@ -281,9 +281,9 @@ def shoppingcart(wraps_res):
         params:wraps_res _check_input_wraps装饰器返回值(1 验证成功输入不为空 0 验证失败输入为空)
         return:返回cartinfo页面
     '''
-    if wraps_res and flask.request.method == 'POST':
-        cartname = flask.request.form.get('cartname')
-        price = flask.request.form.get('price')
+    if wraps_res and flask.request.method == 'GET':
+        cartname = flask.request.args.get('cartname')
+        price = flask.request.args.get('price')
         username = flask.session['username']
         conn = mysql.connector.connect(
             host='127.0.0.1', user='root', passwd='123123', database='test')
@@ -306,10 +306,8 @@ def shoppingcart(wraps_res):
         cursor.close()
         conn.close()
         return flask.render_template('cart/cartinfo.html', res='购物车添加成功')
-    elif flask.request.method == 'GET':
-        return flask.render_template('cart/cartinfo.html')
     else:
-        return flask.render_template('cart/cartinfo.html', res='输入信息不能为空')
+        return flask.render_template('cart/cartinfo.html')
 
 
 @app.route('/carts', methods=['GET', 'POST'])
@@ -345,7 +343,7 @@ def carts():
         return flask.render_template('cart/carts.html', res='当前购物车信息为空')
 
 
-@app.route('/logoff', methods=['GET'])
+@app.route('/user/logoff', methods=['GET'])
 @_check_power
 def logoff():
     '''
@@ -369,7 +367,7 @@ def logoff():
     return flask.redirect(flask.url_for('logout'))
 
 
-@app.route('/DELETE/cartinfo/', methods=['GET'])
+@app.route('/cart/DELETE', methods=['GET'])
 @_check_power
 def delete_carts():
     '''
@@ -392,7 +390,7 @@ def delete_carts():
     return flask.redirect(flask.url_for('carts'))
 
 
-@app.route('/UPDATE/userinfo', methods=['GET', 'POST'])
+@app.route('/user/UPDATE/userinfo', methods=['GET', 'POST'])
 @_check_power
 @_check_input_wraps(['username', 'age'])
 def update_userinfo(wraps_res):
@@ -430,7 +428,7 @@ def update_userinfo(wraps_res):
         return flask.redirect(flask.url_for('students'))
 
 
-@app.route('/UPDATE/password', methods=['GET', 'POST'])
+@app.route('/user/UPDATE/password', methods=['GET', 'POST'])
 @_check_power
 @_check_input_wraps(['old_password', 'new_password1', 'new_password2'])
 def update_passwd(wraps_res):
