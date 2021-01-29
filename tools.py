@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+check_input_wraps       装饰器,用于验证用户输入的参数是否为空
+check_power             装饰器,用于验证用户权限
+check_user              函数,用于验证数据库中是否存在username
+encryption_string       函数,用于对用户输入的字符串进行加盐加密
+insert_db               函数,用于向数据库中插入数据
+check_user_pass         函数,用于验证用户名和密码是否和数据库中匹配
+check_update_passwd     函数,用于验证用户输入的新旧密码是否符合条件
+'''
 from functools import wraps
 import flask
 import mysql.connector

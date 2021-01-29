@@ -18,8 +18,6 @@ import mysql.connector
 import re
 import os
 import json
-import hashlib
-from functools import wraps
 from tools import *
 
 app = flask.Flask(__name__)
