@@ -10,7 +10,7 @@
 /user/UPDATE/userinfo   GET:返回update_info.html页面                    POST:处理用户输入信息,对用户数据进行修改
 /user/UPDATE/password   GET:返回update_passwd.html页面                  POST:处理用户输入信息,对用户数据进行修改
 /carts                  GET:返回carts.html页面,显示用户购物车中的信息
-/cart/INSERT            GET:返回cart/cartinfo.html                      POST:处理用户输入信息将信息插入到数据库中
+/cart/ADD               GET:返回cart/cartinfo.html                      POST:处理用户输入信息将信息插入到数据库中
 /cart/DELETE            GET:重定向到/carts,删除对应id的购物车信息
 '''
 import flask
@@ -84,6 +84,14 @@ def page_not_found(e):
         错误页面
     '''
     return flask.render_template('error/404.html'), 404
+
+
+@app.errorhandler(500)
+def Server_internal_error(e):
+    '''
+        错误页面
+    '''
+    return flask.render_template('error/500.html'), 500
 
 
 @app.route('/user/register', methods=['GET', 'POST'])
@@ -272,7 +280,7 @@ def logout():
     return flask.redirect('/')
 
 
-@app.route('/cart/INSERT', methods=['GET', 'POST'])
+@app.route('/cart/ADD', methods=['GET', 'POST'])
 @_check_power
 @_check_input_wraps(['cartname', 'price'])
 def shoppingcart(wraps_res):
@@ -281,9 +289,9 @@ def shoppingcart(wraps_res):
         params:wraps_res _check_input_wraps装饰器返回值(1 验证成功输入不为空 0 验证失败输入为空)
         return:返回cartinfo页面
     '''
-    if wraps_res and flask.request.method == 'GET':
-        cartname = flask.request.args.get('cartname')
-        price = flask.request.args.get('price')
+    if wraps_res and flask.request.method == 'POST':
+        cartname = flask.request.args.get('cartname', default=None)
+        price = flask.request.args.get('price', default=None)
         username = flask.session['username']
         conn = mysql.connector.connect(
             host='127.0.0.1', user='root', passwd='123123', database='test')
@@ -306,8 +314,10 @@ def shoppingcart(wraps_res):
         cursor.close()
         conn.close()
         return flask.render_template('cart/cartinfo.html', res='购物车添加成功')
-    else:
+    elif flask.request.method == 'GET':
         return flask.render_template('cart/cartinfo.html')
+    else:
+        return flask.render_template('cart/cartinfo.html', res='输入信息不能为空')
 
 
 @app.route('/carts', methods=['GET', 'POST'])
@@ -374,7 +384,7 @@ def delete_carts():
         删除对应id的购物车信息,验证当前用户权限,获取url参数cartid,删除对应cartid数据
         return: 重定向到/carts
     '''
-    cartid = flask.request.args.get('cartid')
+    cartid = flask.request.args.get('cartid', default=None)
     conn = mysql.connector.connect(
         host='127.0.0.1', user='root', passwd='123123', database='test')
     cursor = conn.cursor()
@@ -403,10 +413,10 @@ def update_userinfo(wraps_res):
     elif flask.request.method == 'POST':
         if not wraps_res:
             return flask.render_template('user/update_info.html', res='输入信息不能为空')
-        username = flask.request.form.get('username')
+        username = flask.request.form.get('username', default=None)
         if not __check_user(username):
             return flask.render_template('user/update_info.html', res='用户名已存在')
-        age = flask.request.form.get('age')
+        age = flask.request.form.get('age', default=None)
         conn = mysql.connector.connect(
             host='127.0.0.1', user='root', passwd='123123', database='test')
         cursor = conn.cursor()
@@ -443,9 +453,11 @@ def update_passwd(wraps_res):
         return flask.render_template('user/update_passwd.html')
     elif flask.request.method == 'POST':
         if wraps_res:
-            old_password = flask.request.form.get('old_password')
-            new_password1 = flask.request.form.get('new_password1')
-            new_password2 = flask.request.form.get('new_password2')
+            old_password = flask.request.form.get('old_password', default=None)
+            new_password1 = flask.request.form.get(
+                'new_password1', default=None)
+            new_password2 = flask.request.form.get(
+                'new_password2', default=None)
             check_update_res = _check_update_passwd(
                 old_password, new_password1, new_password2)
             if check_update_res == 1:
