@@ -31,7 +31,7 @@ def check_input_wraps(params_list):
                         res_list.append(params)
                     else:
                         return func(0)
-                if flask.request.method == 'POST':
+                elif flask.request.method == 'POST':
                     params = flask.request.form.get(params)
                     if params:
                         res_list.append(params)
@@ -184,3 +184,36 @@ def check_update_passwd(old_password, new_password1, new_password2):
         print(e)
         # 查询用户失败
         return 2
+
+
+def update_cart(cartid, cartname, price):
+    '''
+        修改商品信息,根据前端返回的cartid修改数据库中对应的数据
+        params:cartid cartid, cartname 用户输入的cartname, price 用户输入的price
+        return:1修改成功 0 修改失败
+    '''
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursor = conn.cursor()
+    sql = 'select cartname,price from cartinfo where cartid=%s'
+    try:
+        cursor.execute(sql, [cartid])
+        data = cursor.fetchall()
+    except Exception as e:
+        print(e)
+        return 0
+    if not data:
+        return 0
+    sql = 'update cartinfo set cartname=%s,price=%s where cartid=%s'
+    try:
+        cursor.execute(sql, [cartname, price, cartid])
+        conn.commit()
+    except Exception as e:
+        print(e)
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return 0
+    cursor.close()
+    conn.close()
+    return 1

@@ -1,0 +1,14 @@
+<h4>{{ cartinfo }}</h4>
+<h4>{{ res }}</h4>
+<form action="/cart/UPDATE" method="POST">
+    <p>cartname: <input type="text" name="cartname" /></p>
+    <p>price: <input type="text" name="price" /></p>
+    <input type="hidden" name="cartinfo" value="{{ cartinfo }}">
+    <input type="submit" value="修改" />
+</form>
+<form action="/carts" method="GET">
+    <input type="submit" value="购物车信息" />
+</form>
+<form action="/users" method="GET">
+    <input type="submit" value="主页" />
+</form>

@@ -10,7 +10,7 @@
 /user/UPDATE/userinfo   GET:返回update_info.html页面                    POST:处理用户输入信息,对用户数据进行修改
 /user/UPDATE/password   GET:返回update_passwd.html页面                  POST:处理用户输入信息,对用户数据进行修改
 /carts                  GET:返回carts.html页面,显示用户购物车中的信息
-/cart/ADD               GET:返回cart/cartinfo.html                      POST:处理用户输入信息将信息插入到数据库中
+/cart/ADD               GET:返回cart/cart_info.html                      POST:处理用户输入信息将信息插入到数据库中
 /cart/DELETE            GET:重定向到/carts,删除对应id的购物车信息
 '''
 import flask
@@ -159,7 +159,7 @@ def shoppingcart(wraps_res):
     '''
         添加用户购物车,check_power装饰器验证用户权限,check_input_wraps装饰器验证用户输入信息是否为空
         params:wraps_res check_input_wraps装饰器返回值(1 验证成功输入不为空 0 验证失败输入为空)
-        return:返回cartinfo页面
+        return:返回cart_info页面
     '''
     if wraps_res and flask.request.method == 'POST':
         cartname = flask.request.form.get('cartname', default=None)
@@ -174,7 +174,7 @@ def shoppingcart(wraps_res):
             data = cursor.fetchall()[0][0]
         except Exception as e:
             print(e)
-            return flask.render_template('cart/cartinfo.html', res='用户id不存在')
+            return flask.render_template('cart/cart_info.html', res='用户id不存在')
         try:
             sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
             cursor.execute(sql, [data, cartname, price])
@@ -182,14 +182,14 @@ def shoppingcart(wraps_res):
         except Exception as e:
             print(e)
             conn.rollback()
-            return flask.render_template('cart/cartinfo.html', res='添加失败')
+            return flask.render_template('cart/cart_info.html', res='添加失败')
         cursor.close()
         conn.close()
-        return flask.render_template('cart/cartinfo.html', res='购物车添加成功')
+        return flask.render_template('cart/cart_info.html', res='购物车添加成功')
     elif flask.request.method == 'GET':
-        return flask.render_template('cart/cartinfo.html')
+        return flask.render_template('cart/cart_info.html')
     else:
-        return flask.render_template('cart/cartinfo.html', res='输入信息不能为空')
+        return flask.render_template('cart/cart_info.html', res='输入信息不能为空')
 
 
 @app.route('/carts', methods=['GET', 'POST'])
@@ -348,6 +348,33 @@ def update_passwd(wraps_res):
             return flask.render_template('user/update_passwd.html', res=res)
         else:
             return flask.render_template('user/update_passwd.html', res='输入信息不能为空')
+
+
+@app.route('/cart/UPDATE', methods=['GET', 'POST'])
+@check_power
+@check_input_wraps(['cartname', 'price'])
+def cart_update(wraps_res):
+    '''
+        修改用户的购物信息,GET请求返回cart/cart_update页面,POST请求获取前端返回数据,将数据在数据库中同步修改
+        return:返回对应页面
+    '''
+    if flask.request.method == 'GET':
+        cartid = flask.request.args.get('cartid', default=None)
+        cartname = flask.request.args.get('cartname', default=None)
+        price = flask.request.args.get('price', default=None)
+        return flask.render_template('cart/cart_update.html', cartinfo='当前商品信息:{}, {}, {}'.format(cartid, cartname, price))
+    if flask.request.method == 'POST' and wraps_res:
+        cartinfo = flask.request.form.get('cartinfo', default=None)
+        cartname = flask.request.form.get('cartname', default=None)
+        price = flask.request.form.get('price', default=None)
+        cartid = re.findall(':(.*?),', cartinfo)[0]
+        if update_cart(cartid, cartname, price):
+            return flask.render_template('cart/cart_update.html', cartinfo='当前商品信息:{}, {}, {}'.format(cartid, cartname, price), res='修改成功')
+        else:
+            return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res='修改失败')
+    elif flask.request.method == 'POST' and not wraps_res:
+        cartinfo = flask.request.form.get('cartinfo')
+        return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res='当前输入信息为空')
 
 
 if __name__ == '__main__':
