@@ -1,19 +1,30 @@
+<title>carts.html Page</title>
 <h4>{{ res }}</h4>
-{% for cartid,cartname,price in data %}
-<h5>{{cartname}} {{price}}</h5>
-<p>
-    <form action="/cart/DELETE" method='GET'>
-        <input type="hidden" name="cartid" value="{{cartid}}">
-        <input type="submit" value="删除">
-    </form>
-    <form action="/cart/UPDATE" method='GET'>
-        <input type="hidden" name="cartid" value="{{cartid}}">
-        <input type="hidden" name="cartname" value="{{cartname}}">
-        <input type="hidden" name="price" value="{{price}}">
-        <input type="submit" value="更新">
-    </form>
-</p>
-{% endfor %}
+
+<table border="1">
+    {% for cartid,cartname,price in data %}
+    <tr>
+        <th>
+            <h5>{{cartname}}</h5>
+        </th>
+        <th>
+            <h5>{{price}}</h5>
+        </th>
+        <th>
+            <form action="/cart/DELETE" method='GET'>
+                <input type="hidden" name="cartid" value="{{cartid}}">
+                <input type="submit" value="删除">
+            </form>
+            <form action="/cart/UPDATE" method='GET'>
+                <input type="hidden" name="cartid" value="{{cartid}}">
+                <input type="hidden" name="cartname" value="{{cartname}}">
+                <input type="hidden" name="price" value="{{price}}">
+                <input type="submit" value="更新">
+            </form>
+        </th>
+    </tr>
+    {% endfor %}
+</table>
 <form action="/cart/ADD" method="GET">
     <input type="submit" value="继续添加">
 </form>
