@@ -10,8 +10,10 @@
 /user/UPDATE/userinfo   GET:返回update_info.html页面                    POST:处理用户输入信息,对用户数据进行修改
 /user/UPDATE/password   GET:返回update_passwd.html页面                  POST:处理用户输入信息,对用户数据进行修改
 /carts                  GET:返回carts.html页面,显示用户购物车中的信息
-/cart/ADD               GET:返回cart/cart_info.html                      POST:处理用户输入信息将信息插入到数据库中
+/cart/ADD               GET:返回cart/cart_info.html                     POST:处理用户输入信息将信息插入到数据库中
 /cart/DELETE            GET:重定向到/carts,删除对应id的购物车信息
+/files                  GET:返回files.html页面
+/file/upfile            GET:返回files.html页面                          POST:处理用户上传文件
 '''
 import flask
 import mysql.connector
@@ -368,12 +370,21 @@ def cart_update(wraps_res):
 @app.route('/files', methods=['GET', 'POST'])
 @check_power
 def file():
+    '''
+        显示上传文件页面,GET请求方式返回file/files.html
+        return:返回file/files.html
+    '''
     return flask.render_template('file/files.html')
 
 
 @app.route('/file/upfile', methods=['GET', 'POST'])
 @check_power
 def upfile():
+    '''
+        上传文件,GET请求返回file/files.html POST请求获得用户上传的文件,保存在static/upload_file/文件夹中
+        如果是png或者txt后缀,显示在files.html中进行预览,否则不能进行预览
+        return: 返回对应的页面
+    '''
     if flask.request.method == 'POST':
         file = flask.request.files['file']
         filename = secure_filename(file.filename)
@@ -390,7 +401,7 @@ def upfile():
                     data = f.read()
                 return flask.render_template('file/files.html', res=data)
             else:
-                return flask.render_template('file/files.html',res='文件格式暂不支持在线预览')
+                return flask.render_template('file/files.html', res='文件格式暂不支持在线预览')
         else:
             return flask.render_template('file/files.html', res='上传文件为空')
     elif flask.request.method == 'GET':
