@@ -19,6 +19,7 @@ import re
 import os
 import json
 from tools import *
+from werkzeug.utils import secure_filename
 
 app = flask.Flask(__name__)
 app.debug = True
@@ -31,6 +32,7 @@ def index():
     '''
         请求路由为/,返回register页面
     '''
+    print(flask.request.cookies)
     if 'username' in flask.session:
         return flask.render_template('index.html', name='', res='You are login')
     return flask.render_template('index.html', name='', res='You are not logged in')
@@ -332,20 +334,7 @@ def update_passwd(wraps_res):
                 'new_password2', default=None)
             check_update_res = check_update_passwd(
                 old_password, new_password1, new_password2)
-            if check_update_res == 1:
-                flask.session.pop('username', None)
-                return flask.redirect('/user/login')
-            elif check_update_res == 2:
-                res = '查询用户失败'
-            elif check_update_res == 3:
-                res = '输入的原密码不正确'
-            elif check_update_res == 4:
-                res = '两次输入的新密码不正确'
-            elif check_update_res == 5:
-                res = '修改密码失败'
-            elif check_update_res == 6:
-                res = '新密码和旧密码相同'
-            return flask.render_template('user/update_passwd.html', res=res)
+            return flask.render_template('user/update_passwd.html', res=check_update_res)
         else:
             return flask.render_template('user/update_passwd.html', res='输入信息不能为空')
 
@@ -375,6 +364,36 @@ def cart_update(wraps_res):
     elif flask.request.method == 'POST' and not wraps_res:
         cartinfo = flask.request.form.get('cartinfo')
         return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res='当前输入信息为空')
+
+
+@app.route('/files')
+@check_power
+def file():
+    return flask.render_template('file/files.html')
+
+
+@app.route('/file/upfile', methods=['GET', 'POST'])
+@check_power
+def upfile():
+    if flask.request.method == 'POST':
+        file = flask.request.files['file']
+        filename = secure_filename(file.filename)
+        if filename:
+            basepath = os.path.dirname(__file__)
+            upload_path = os.path.join(
+                basepath, 'static/upload_file', filename)
+            file.save(upload_path)
+            if '.png' in filename:
+                filename = 'upload_file/{}'.format(filename)
+                return flask.render_template('file/files.html', img=flask.url_for('static', filename=filename))
+            elif '.txt' in filename:
+                with open(upload_path, 'r') as f:
+                    data = f.read()
+                return flask.render_template('file/files.html', res=data)
+        else:
+            return flask.render_template('file/files.html', res='上传文件为空')
+    elif flask.request.method == 'GET':
+        return flask.render_template('file/files.html')
 
 
 if __name__ == '__main__':

@@ -149,41 +149,44 @@ def check_update_passwd(old_password, new_password1, new_password2):
     '''
     if new_password1 != new_password2:
         # 两次新密码不一致
-        return 4
-    old_password = encryption_string(old_password)
-    if encryption_string(new_password1) == old_password:
-        # 新旧密码相同
-        return 6
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
-    cursor = conn.cursor()
-    sql = 'select password from students where name = %s'
-    try:
-        cursor.execute(sql, [flask.session['username']])
-        password = cursor.fetchall()[0][0]
-        if password == old_password:
-            # 修改密码
-            sql = 'update students set password = %s where name = %s'
+        res = '输入的新密码不一致'
+    else:
+        old_password = encryption_string(old_password)
+        if encryption_string(new_password1) == old_password:
+            # 新旧密码相同
+            print('...')
+            res = '新密码不能和旧密码相同'
+        else:
+            conn = mysql.connector.connect(
+                host='127.0.0.1', user='root', passwd='123123', database='test')
+            cursor = conn.cursor()
+            sql = 'select password from students where name = %s'
             try:
-                cursor.execute(sql, [encryption_string(
-                    new_password1), flask.session['username']])
-                conn.commit()
+                cursor.execute(sql, [flask.session['username']])
+                password = cursor.fetchall()[0][0]
+                if password == old_password:
+                    # 修改密码
+                    sql = 'update students set password = %s where name = %s'
+                    try:
+                        cursor.execute(sql, [encryption_string(
+                            new_password1), flask.session['username']])
+                        conn.commit()
+                    except Exception as e:
+                        print(e)
+                        # 修改密码失败
+                        res = '修改密码失败'
+                    else:
+                        res = '修改密码成功'
+                else:
+                    # 密码不匹配
+                    res = '旧密码输入不正确'
+                cursor.close()
+                conn.close()
             except Exception as e:
                 print(e)
-                # 修改密码失败
-                return 5
-            cursor.close()
-            conn.close()
-            return 1
-        else:
-            # 密码不匹配
-            return 3
-        cursor.close()
-        conn.close()
-    except Exception as e:
-        print(e)
-        # 查询用户失败
-        return 2
+                # 查询用户失败
+                res = '查询用户失败'
+    return res
 
 
 def update_cart(cartid, cartname, price):
