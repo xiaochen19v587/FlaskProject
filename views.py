@@ -32,7 +32,6 @@ def index():
     '''
         请求路由为/,返回register页面
     '''
-    print(flask.request.cookies)
     if 'username' in flask.session:
         return flask.render_template('index.html', name='', res='You are login')
     return flask.render_template('index.html', name='', res='You are not logged in')
