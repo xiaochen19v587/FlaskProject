@@ -365,7 +365,7 @@ def cart_update(wraps_res):
         return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res='当前输入信息为空')
 
 
-@app.route('/files')
+@app.route('/files', methods=['GET', 'POST'])
 @check_power
 def file():
     return flask.render_template('file/files.html')
@@ -389,6 +389,8 @@ def upfile():
                 with open(upload_path, 'r') as f:
                     data = f.read()
                 return flask.render_template('file/files.html', res=data)
+            else:
+                return flask.render_template('file/files.html',res='文件格式暂不支持在线预览')
         else:
             return flask.render_template('file/files.html', res='上传文件为空')
     elif flask.request.method == 'GET':
