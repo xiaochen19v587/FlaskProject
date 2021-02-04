@@ -386,7 +386,7 @@ def upfile():
         return: 返回对应的页面
     '''
     if flask.request.method == 'POST':
-        file = flask.request.files['file']
+        file = flask.request.files.get('file')
         filename = secure_filename(file.filename)
         if filename:
             basepath = os.path.dirname(__file__)
