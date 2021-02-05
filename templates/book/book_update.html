@@ -1,0 +1,13 @@
+<title>carts.html Page</title>
+<h4>{{ res }}</h4>
+<h5>{{ data }}</h5>
+<h5>{{ input }}</h5>
+
+<body>
+    <form action="/book/UPDATE" method="POST">
+        <input type="hidden" name="data" id="" value="{{ data }}"><br> 书名:
+        <input type="text" name="name" id=""><br> 作者:
+        <input type="text" name="author" id=""><br><br>
+        <input type="submit" name="" id="" value="提交">
+    </form>
+</body>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<title>books.html page</title>
+
+<body>
+    {{res}}
+    <table border="1">
+        <tr>
+            <th>书名</th>
+            <th>作者</th>
+            <th>操作</th>
+        </tr>
+        {% for id,name,author in books %}
+        <tr>
+            <th>{{name}}</th>
+            <th>{{author}}</th>
+            <th>
+                <form action="/book/DELETE" method="GET">
+                    <input type="hidden" name="id" value="{{id}}">
+                    <input type="submit" name="" id="" value="删除">
+                </form>
+                <form action="/book/UPDATE" method="GET">
+                    <input type="hidden" name="id" value="{{id}}">
+                    <input type="hidden" name="name" value="{{name}}">
+                    <input type="hidden" name="author" value="{{author}}">
+                    <input type="submit" name="" id="" value="修改">
+                </form>
+            </th>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <form action="/users">
+        <input type="submit" name="" id="" value="主页">
+    </form>
+</body>
+
+
+</html>

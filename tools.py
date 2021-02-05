@@ -8,6 +8,7 @@ encryption_string       函数,用于对用户输入的字符串进行加盐加�
 insert_db               函数,用于向数据库中插入数据
 check_user_pass         函数,用于验证用户名和密码是否和数据库中匹配
 check_update_passwd     函数,用于验证用户输入的新旧密码是否符合条件
+update_cart             函数,修改商品信息
 '''
 from functools import wraps
 import flask
@@ -99,6 +100,9 @@ def insert_db(name, age, password):
     try:
         cursor.execute(sql, [name, age, password])
         conn.commit()
+        sql = 'select id from students where name = %s'
+        cursor.execute(sql, [name])
+        id = cursor.fetchall()[0][0]
         err = None
     except Exception as e:
         print(e)
@@ -107,9 +111,9 @@ def insert_db(name, age, password):
     cursor.close()
     conn.close()
     if err:
-        return 0
+        return (0, None)
     else:
-        return 1
+        return (1, id)
 
 
 def check_user_pass(username, password):
@@ -121,20 +125,20 @@ def check_user_pass(username, password):
     conn = mysql.connector.connect(
         host='127.0.0.1', user='root', passwd='123123', database='test')
     cursor = conn.cursor()
-    sql = 'select password, isalive from students where name = %s'
+    sql = 'select password, isalive, id from students where name = %s'
     try:
         cursor.execute(sql, [username])
         user_pass = cursor.fetchall()
         cursor.close()
         conn.close()
         if user_pass[0][0] == password and user_pass[0][1] == 0:
-            return 1
+            return (1, user_pass[0][2])
         elif user_pass[0][1] == 1:
-            return 2
+            return (2, None)
         elif user_pass[0][0] != password:
-            return 0
+            return (0, None)
     except:
-        return 0
+        return (0, None)
 
 
 def check_update_passwd(old_password, new_password1, new_password2):
@@ -215,3 +219,42 @@ def update_cart(cartid, cartname, price):
     cursor.close()
     conn.close()
     return 1
+
+
+def select_book(userid):
+    '''
+        查找对应用户的书籍信息,根据用户的id查找到数据库中所有的书籍信息
+        return:书籍信息
+    '''
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursor = conn.cursor()
+    sql = 'select id,name,author from books where studentid=%s'
+    cursor.execute(sql, [userid])
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return data
+
+
+def update_book_info(id, name, author):
+    '''
+        接收三个参数,进行数据修改
+        params:id 书籍id;name 书籍名;author 作者
+        return:1 修改成功 0 修改失败
+    '''
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursor = conn.cursor()
+    sql = 'update books set name=%s,author=%s where id=%s'
+    try:
+        cursor.execute(sql, [name, author, id])
+        conn.commit()
+        err = 1
+    except Exception as e:
+        print(e)
+        err = 0
+        conn.rollback()
+    cursor.close()
+    conn.close()
+    return err

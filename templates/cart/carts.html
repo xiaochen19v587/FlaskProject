@@ -2,14 +2,15 @@
 <h4>{{ res }}</h4>
 
 <table border="1">
+    <tr>
+        <th>商品</th>
+        <th>价格</th>
+        <th>功能</th>
+    </tr>
     {% for cartid,cartname,price in data %}
     <tr>
-        <th>
-            <h5>{{cartname}}</h5>
-        </th>
-        <th>
-            <h5>{{price}}</h5>
-        </th>
+        <th>{{cartname}}</th>
+        <th>{{price}}</th>
         <th>
             <form action="/cart/DELETE" method='GET'>
                 <input type="hidden" name="cartid" value="{{cartid}}">

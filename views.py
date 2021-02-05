@@ -14,6 +14,7 @@
 /cart/DELETE            GET:重定向到/carts,删除对应id的购物车信息
 /files                  GET:返回files.html页面
 /file/upfile            GET:返回files.html页面                          POST:处理用户上传文件
+/books                  GET:返回books.html页面
 '''
 import flask
 import mysql.connector
@@ -48,11 +49,19 @@ def page_not_found(e):
 
 
 @app.errorhandler(500)
-def Server_internal_error(e):
+def server_internal_error(e):
     '''
         错误页面
     '''
     return flask.render_template('error/500.html'), 500
+
+
+@app.errorhandler(405)
+def method_not_found(e):
+    '''
+        错误页面
+    '''
+    return flask.render_template('error/405.html'), 405
 
 
 @app.route('/user/register', methods=['GET', 'POST'])
@@ -72,12 +81,14 @@ def register(wrap_res):
             password = flask.request.form.get('password', default=None)
             password = encryption_string(password)
             if check_user(username):
-                if insert_db(username, age, password):
+                insert_db_res = insert_db(username, age, password)
+                if insert_db_res[0] == 1:
                     resp = flask.make_response(flask.redirect('/users'))
                     resp.set_cookie('username', username)
                     flask.session['username'] = username
+                    flask.session['id'] = insert_db_res[1]
                     return resp
-                else:
+                elif insert_db_res[0] == 0:
                     return flask.render_template('user/register.html', res='注册失败')
             else:
                 return flask.render_template('user/register.html', res='{}已存在'.format(username))
@@ -100,12 +111,16 @@ def login(wrap_res):
             username = flask.request.form.get('username', default=None)
             password = flask.request.form.get('password', default=None)
             password = encryption_string(password)
-            if check_user_pass(username, password) == 1:
+            check_user_pass_res = check_user_pass(username, password)
+            id = check_user_pass_res[1]
+            res = check_user_pass_res[0]
+            if res == 1:
                 resp = flask.make_response(flask.redirect('/users'))
                 resp.set_cookie('username', username)
                 flask.session['username'] = username
+                flask.session['id'] = id
                 return resp
-            elif check_user_pass(username, password) == 2:
+            elif res == 2:
                 return flask.render_template('user/login.html', res='用户已注销')
             else:
                 return flask.render_template('user/login.html', res='用户名或密码输入错误')
@@ -312,7 +327,6 @@ def update_userinfo(wraps_res):
         cursor.close()
         conn.close()
         flask.session['username'] = username
-        print(flask.session['username'])
         return flask.redirect('/user/info')
 
 
@@ -406,6 +420,70 @@ def upfile():
             return flask.render_template('file/files.html', res='上传文件为空')
     elif flask.request.method == 'GET':
         return flask.render_template('file/files.html')
+
+
+@app.route('/books', methods=['GET'])
+@check_power
+def books():
+    '''
+        书籍信息,GET请求返回当前用户的书籍信息
+    '''
+    if flask.request.method == 'GET':
+        userid = flask.session['id']
+        book_data = select_book(userid)
+        if book_data:
+            return flask.render_template('book/books.html', books=book_data)
+        else:
+            return flask.render_template('book/books.html', res='当前书籍信息为空')
+
+
+@app.route('/book/DELETE', methods=['GET'])
+@check_power
+def delete_book():
+    '''
+        删除书籍,根据选中书籍id删除数据库中的书籍信息
+    '''
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursur = conn.cursor()
+    sql = 'delete from books where id = %s'
+    try:
+        cursur.execute(sql, [flask.request.args.get('id')])
+        conn.commit()
+    except Exception as e:
+        print(e)
+        conn.rollback()
+    cursur.close()
+    conn.close()
+    return flask.redirect('/books')
+
+
+@app.route('/book/UPDATE', methods=['GET', 'POST'])
+@check_power
+@check_input_wraps(['name','author'])
+def update_book(wraps_res):
+    '''
+        修改用户书籍信息,GET请求返回book_update.html页面,传入data;POST请求修改数据,将用户输入的信息进行检测后传递给update_book_info函数,进行数据修改
+        return:返回对应页面和信息
+    '''
+    if flask.request.method == 'GET':
+        id = flask.request.args.get('id')
+        name = flask.request.args.get('name')
+        author = flask.request.args.get('author')
+        return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=(id, name, author))
+    elif flask.request.method == 'POST':
+        if not re.findall("'(.*?)'",flask.request.form.get('data')):
+            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='UnKnow Err')
+        id = re.findall("'(.*?)'",flask.request.form.get('data'))[0]
+        name = flask.request.form.get('name')
+        author = flask.request.form.get('author')
+        if wraps_res:
+            if update_book_info(id,name,author):
+                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='修改成功')
+            else:
+                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='修改失败')
+        else:
+            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='输入信息不能为空')
 
 
 if __name__ == '__main__':
