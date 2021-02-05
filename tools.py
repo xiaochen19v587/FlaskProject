@@ -28,13 +28,13 @@ def check_input_wraps(params_list):
                          "&", "%", "@", "$", " ", "\\"]
             for params in params_list:
                 if flask.request.method == 'GET':
-                    method_func = flask.request.args.get(params)
+                    method_func_res = flask.request.args.get(params)
                 elif flask.request.method == 'POST':
-                    method_func = flask.request.form.get(params)
-                if not method_func:
+                    method_func_res = flask.request.form.get(params)
+                if not method_func_res:
                     return func(0)
                 for sign in sign_list:
-                    if sign in method_func:
+                    if sign in method_func_res:
                         return func(0)
             return func(1)
         return check_input
