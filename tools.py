@@ -24,15 +24,22 @@ def check_input_wraps(params_list):
     def wrapper(func):
         @wraps(func)
         def check_input(*args, **kwargs):
+            sign_list = ["|", "_", "~", "^", "*", "&", "%", "@", "$", " "]
             for params in params_list:
                 if flask.request.method == 'GET':
                     params = flask.request.args.get(params)
                     if not params:
                         return func(0)
+                    for sign in sign_list:
+                        if sign in params:
+                            return func(0)
                 elif flask.request.method == 'POST':
                     params = flask.request.form.get(params)
                     if not params:
                         return func(0)
+                    for sign in sign_list:
+                        if sign in params:
+                            return func(0)
             return func(1)
         return check_input
     return wrapper
