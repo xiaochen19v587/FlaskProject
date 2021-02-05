@@ -24,7 +24,7 @@ def check_input_wraps(params_list):
     def wrapper(func):
         @wraps(func)
         def check_input(*args, **kwargs):
-            sign_list = ["|", "_", "~", "^", "*", "&", "%", "@", "$", " "]
+            sign_list = ["|", "_", "~", "^", "*", "&", "%", "@", "$", " ","\\"]
             for params in params_list:
                 if flask.request.method == 'GET':
                     params = flask.request.args.get(params)
