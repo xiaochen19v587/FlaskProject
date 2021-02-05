@@ -210,15 +210,14 @@ def update_cart(cartid, cartname, price):
     try:
         cursor.execute(sql, [cartname, price, cartid])
         conn.commit()
+        err = 1
     except Exception as e:
         print(e)
         conn.rollback()
-        cursor.close()
-        conn.close()
-        return 0
+        err = 0
     cursor.close()
     conn.close()
-    return 1
+    return err
 
 
 def select_book(userid):
@@ -275,6 +274,7 @@ def add_book_info(studentid, name, author):
         conn.commit()
         err = 1
     except Exception as e:
+        print(e)
         conn.rollback()
         err = 0
     cursor.close()
