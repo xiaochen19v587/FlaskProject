@@ -153,7 +153,7 @@ def userinfo():
         验证权限之后跳转到用户页面,显示用户id,name,age,passwd
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'select * from students where name = %s'
     try:
@@ -190,7 +190,7 @@ def shoppingcart(wraps_res):
             cartname = flask.request.form.get('cartname', default=None)
             price = flask.request.form.get('price', default=None)
             conn = mysql.connector.connect(
-                host='127.0.0.1', user='root', passwd='123123', database='test')
+                host='127.0.0.1', user='root', passwd='123123', database='info')
             cursor = conn.cursor()
             try:
                 sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
@@ -219,7 +219,7 @@ def carts():
     '''
     user_id = flask.session['id']
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     try:
         sql = 'select cartid,cartname,price from cartinfo where studentid = %s'
@@ -248,7 +248,7 @@ def logoff():
     '''
     username = flask.session['username']
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'update students set isalive = 1 where name = %s'
     try:
@@ -272,7 +272,7 @@ def delete_carts():
     '''
     cartid = flask.request.args.get('cartid', default=None)
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     try:
         sql = 'delete from cartinfo where cartid = %s'
@@ -304,7 +304,7 @@ def update_userinfo(wraps_res):
             return flask.render_template('user/update_info.html', res='用户名已存在')
         age = flask.request.form.get('age', default=None)
         conn = mysql.connector.connect(
-            host='127.0.0.1', user='root', passwd='123123', database='test')
+            host='127.0.0.1', user='root', passwd='123123', database='info')
         cursor = conn.cursor()
         sql = 'select id from students where name = %s'
         try:
@@ -450,7 +450,7 @@ def delete_book():
         删除书籍,根据选中书籍id删除数据库中的书籍信息
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursur = conn.cursor()
     sql = 'delete from books where id = %s'
     try:

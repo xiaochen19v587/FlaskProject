@@ -65,7 +65,7 @@ def check_user(username):
         return:0 已存在 1 不存在
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = "select id from students where name = %s"
     cursor.execute(sql, [username])
@@ -100,7 +100,7 @@ def insert_db(name, age, password):
         return: 0 插入数据失败 1 插入数据成功
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'insert into students (name,age,password) values (%s,%s,%s)'
     try:
@@ -129,7 +129,7 @@ def check_user_pass(username, password):
         return: 1 用户名和密码匹配成功 0 用户名和密码匹配失败 2 当前用户已经注销
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'select password, isalive, id from students where name = %s'
     try:
@@ -163,7 +163,7 @@ def check_update_passwd(old_password, new_password1, new_password2):
             res = '新密码不能和旧密码相同'
         else:
             conn = mysql.connector.connect(
-                host='127.0.0.1', user='root', passwd='123123', database='test')
+                host='127.0.0.1', user='root', passwd='123123', database='info')
             cursor = conn.cursor()
             sql = 'select password from students where name = %s'
             try:
@@ -201,7 +201,7 @@ def update_cart(cartid, cartname, price):
         return:1修改成功 0 修改失败
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'select cartname,price from cartinfo where cartid=%s'
     try:
@@ -232,7 +232,7 @@ def select_book(userid):
         return:书籍信息
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'select id,name,author from books where studentid=%s'
     cursor.execute(sql, [userid])
@@ -249,7 +249,7 @@ def update_book_info(id, name, author):
         return:1 修改成功 0 修改失败
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'update books set name=%s,author=%s where id=%s'
     try:
@@ -272,7 +272,7 @@ def add_book_info(studentid, name, author):
         return:1 添加成功 0 添加失败
     '''
     conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='test')
+        host='127.0.0.1', user='root', passwd='123123', database='info')
     cursor = conn.cursor()
     sql = 'insert into books (studentid,name,author) values (%s,%s,%s)'
     try:
