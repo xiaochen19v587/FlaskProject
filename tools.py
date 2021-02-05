@@ -258,3 +258,25 @@ def update_book_info(id, name, author):
     cursor.close()
     conn.close()
     return err
+
+
+def add_book_info(studentid, name, author):
+    '''
+        接收数据,将数据添加到数据库中
+        params:studentid 当前登录用户id;name 书籍名;author 书籍作者
+        return:1 添加成功 0 添加失败
+    '''
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='test')
+    cursor = conn.cursor()
+    sql = 'insert into books (studentid,name,author) values (%s,%s,%s)'
+    try:
+        cursor.execute(sql, [studentid, name, author])
+        conn.commit()
+        err = 1
+    except Exception as e:
+        conn.rollback()
+        err = 0
+    cursor.close()
+    conn.close()
+    return err

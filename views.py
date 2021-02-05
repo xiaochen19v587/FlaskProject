@@ -460,7 +460,7 @@ def delete_book():
 
 @app.route('/book/UPDATE', methods=['GET', 'POST'])
 @check_power
-@check_input_wraps(['name','author'])
+@check_input_wraps(['name', 'author'])
 def update_book(wraps_res):
     '''
         修改用户书籍信息,GET请求返回book_update.html页面,传入data;POST请求修改数据,将用户输入的信息进行检测后传递给update_book_info函数,进行数据修改
@@ -472,18 +472,41 @@ def update_book(wraps_res):
         author = flask.request.args.get('author')
         return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=(id, name, author))
     elif flask.request.method == 'POST':
-        if not re.findall("'(.*?)'",flask.request.form.get('data')):
-            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='UnKnow Err')
-        id = re.findall("'(.*?)'",flask.request.form.get('data'))[0]
+        if not re.findall("'(.*?)'", flask.request.form.get('data')):
+            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'), input='UnKnow Err')
+        id = re.findall("'(.*?)'", flask.request.form.get('data'))[0]
         name = flask.request.form.get('name')
         author = flask.request.form.get('author')
         if wraps_res:
-            if update_book_info(id,name,author):
-                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='修改成功')
+            if update_book_info(id, name, author):
+                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=(id, name, author), input='修改成功')
             else:
-                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='修改失败')
+                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'), input='修改失败')
         else:
-            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'),input='输入信息不能为空')
+            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'), input='输入信息不能为空')
+
+
+@app.route('/book/ADD', methods=['GET', 'POST'])
+@check_power
+@check_input_wraps(['name', 'author'])
+def add_book(wraps_res):
+    '''
+        添加书籍,GET请求返回book_info.html页面;POST请求获取用户输入的信息,调用add_book_info函数对数据进行处理
+        params:wraps_res 1 用户输入信息验证通过 0 用户输入信息为空
+        return:返回对应页面和对应信息
+    '''
+    if flask.request.method == 'GET':
+        return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']))
+    elif flask.request.method == 'POST':
+        if wraps_res:
+            name = flask.request.form.get('name')
+            author = flask.request.form.get('author')
+            if add_book_info(flask.session['id'], name, author):
+                return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res='添加成功')
+            else:
+                return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res='添加失败')
+        else:
+            return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res='输入信息不能为空')
 
 
 if __name__ == '__main__':
