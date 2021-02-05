@@ -9,6 +9,9 @@ insert_db               函数,用于向数据库中插入数据
 check_user_pass         函数,用于验证用户名和密码是否和数据库中匹配
 check_update_passwd     函数,用于验证用户输入的新旧密码是否符合条件
 update_cart             函数,修改商品信息
+select_book             函数,查找用户书籍
+update_book_info        函数,修改用户书籍信息
+add_book_info           函数,添加书籍信息
 '''
 from functools import wraps
 import flask
