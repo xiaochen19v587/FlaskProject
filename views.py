@@ -36,8 +36,9 @@ def index():
         请求路由为/,返回register页面
     '''
     if 'username' in flask.session:
-        return flask.render_template('index.html', name='', res='You are login')
-    return flask.render_template('index.html', name='', res='You are not logged in')
+        res = 'You are login'
+    res = 'You are not logged in'
+    return flask.render_template('index.html', name='', res=res)
 
 
 @app.errorhandler(404)
@@ -89,11 +90,12 @@ def register(wrap_res):
                     flask.session['id'] = insert_db_res[1]
                     return resp
                 elif insert_db_res[0] == 0:
-                    return flask.render_template('user/register.html', res='注册失败')
+                    res = '注册失败'
             else:
-                return flask.render_template('user/register.html', res='{}已存在'.format(username))
+                res = '{}已存在'.format(username)
         else:
-            return flask.render_template('user/register.html', res='请输入正确的信息')
+            res = '请输入正确的信息'
+        return flask.render_template('user/register.html', res=res)
     elif flask.request.method == 'GET':
         return flask.render_template('user/register.html')
 
@@ -121,11 +123,12 @@ def login(wrap_res):
                 flask.session['id'] = id
                 return resp
             elif res == 2:
-                return flask.render_template('user/login.html', res='用户已注销')
+                res = '用户已注销'
             else:
-                return flask.render_template('user/login.html', res='用户名或密码输入错误')
+                res = '用户名或密码输入错误'
         else:
-            return flask.render_template('user/login.html', res='请输入正确的参数')
+            res = '请输入正确的参数'
+        return flask.render_template('user/login.html', res=res)
     elif flask.request.method == 'GET':
         return flask.render_template('user/login.html')
 
@@ -180,34 +183,28 @@ def shoppingcart(wraps_res):
         return:返回cart_info页面
     '''
     if wraps_res and flask.request.method == 'POST':
-        cartname = flask.request.form.get('cartname', default=None)
-        price = flask.request.form.get('price', default=None)
-        username = flask.session['username']
-        conn = mysql.connector.connect(
-            host='127.0.0.1', user='root', passwd='123123', database='test')
-        cursor = conn.cursor()
-        sql = 'select id from students where name = %s'
-        try:
-            cursor.execute(sql, [username])
-            data = cursor.fetchall()[0][0]
-        except Exception as e:
-            print(e)
-            return flask.render_template('cart/cart_info.html', res='用户id不存在')
-        try:
-            sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
-            cursor.execute(sql, [data, cartname, price])
-            conn.commit()
-        except Exception as e:
-            print(e)
-            conn.rollback()
-            return flask.render_template('cart/cart_info.html', res='添加失败')
-        cursor.close()
-        conn.close()
-        return flask.render_template('cart/cart_info.html', res='购物车添加成功')
+        if wraps_res:
+            cartname = flask.request.form.get('cartname', default=None)
+            price = flask.request.form.get('price', default=None)
+            conn = mysql.connector.connect(
+                host='127.0.0.1', user='root', passwd='123123', database='test')
+            cursor = conn.cursor()
+            try:
+                sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
+                cursor.execute(sql, [flask.session['id'], cartname, price])
+                conn.commit()
+            except Exception as e:
+                print(e)
+                conn.rollback()
+                return flask.render_template('cart/cart_info.html', res='添加失败')
+            cursor.close()
+            conn.close()
+            res = '购物车添加成功'
+        else:
+            res = '输入信息不能为空'
+        return flask.render_template('cart/cart_info.html', res=res)
     elif flask.request.method == 'GET':
         return flask.render_template('cart/cart_info.html')
-    else:
-        return flask.render_template('cart/cart_info.html', res='输入信息不能为空')
 
 
 @app.route('/carts', methods=['GET', 'POST'])
@@ -217,17 +214,10 @@ def carts():
         显示当前登录用户的购物车信息,check_power装饰器验证用户权限
         return:返回carts页面,用于显示用户购物车信息
     '''
-    username = flask.session['username']
+    user_id = flask.session['id']
     conn = mysql.connector.connect(
         host='127.0.0.1', user='root', passwd='123123', database='test')
     cursor = conn.cursor()
-    try:
-        sql = 'select id from students where name=%s'
-        cursor.execute(sql, [username])
-        user_id = cursor.fetchall()[0][0]
-    except Exception as e:
-        print(e)
-        return flask.render_template('cart/carts.html', res='查询用户失败')
     try:
         sql = 'select cartid,cartname,price from cartinfo where studentid = %s'
         cursor.execute(sql, [user_id])
@@ -238,9 +228,12 @@ def carts():
     cursor.close()
     conn.close()
     if data:
-        return flask.render_template('cart/carts.html', res='{}用户的购物车'.format(flask.session['username']), data=data)
+        res = '{}用户的购物车'.format(flask.session['username'])
+        data = data
     else:
-        return flask.render_template('cart/carts.html', res='当前购物车信息为空')
+        res = '当前购物车信息为空'
+        data = ''
+    return flask.render_template('cart/carts.html', res=res, data=data)
 
 
 @app.route('/user/logoff', methods=['GET'])
@@ -349,9 +342,10 @@ def update_passwd(wraps_res):
                 'new_password2', default=None)
             check_update_res = check_update_passwd(
                 old_password, new_password1, new_password2)
-            return flask.render_template('user/update_passwd.html', res=check_update_res)
+            res = check_update_res
         else:
-            return flask.render_template('user/update_passwd.html', res='输入信息不能为空')
+            res = '输入信息不能为空'
+        return flask.render_template('user/update_passwd.html', res=res)
 
 
 @app.route('/cart/UPDATE', methods=['GET', 'POST'])
@@ -367,18 +361,22 @@ def cart_update(wraps_res):
         cartname = flask.request.args.get('cartname', default=None)
         price = flask.request.args.get('price', default=None)
         return flask.render_template('cart/cart_update.html', cartinfo='当前商品信息:{}, {}, {}'.format(cartid, cartname, price))
-    if flask.request.method == 'POST' and wraps_res:
-        cartinfo = flask.request.form.get('cartinfo', default=None)
-        cartname = flask.request.form.get('cartname', default=None)
-        price = flask.request.form.get('price', default=None)
-        cartid = re.findall(':(.*?),', cartinfo)[0]
-        if update_cart(cartid, cartname, price):
-            return flask.render_template('cart/cart_update.html', cartinfo='当前商品信息:{}, {}, {}'.format(cartid, cartname, price), res='修改成功')
+    if flask.request.method == 'POST':
+        if wraps_res:
+            cartinfo = flask.request.form.get('cartinfo', default=None)
+            cartname = flask.request.form.get('cartname', default=None)
+            price = flask.request.form.get('price', default=None)
+            cartid = re.findall(':(.*?),', cartinfo)[0]
+            if update_cart(cartid, cartname, price):
+                cartinfo = '当前商品信息:{}, {}, {}'.format(cartid, cartname, price)
+                res = '修改成功'
+            else:
+                cartinfo = cartinfo
+                res = '修改失败'
         else:
-            return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res='修改失败')
-    elif flask.request.method == 'POST' and not wraps_res:
-        cartinfo = flask.request.form.get('cartinfo')
-        return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res='当前输入信息为空')
+            cartinfo = flask.request.form.get('cartinfo')
+            res = '当前输入信息为空'
+        return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res=res)
 
 
 @app.route('/files', methods=['GET', 'POST'])
@@ -402,6 +400,8 @@ def upfile():
     if flask.request.method == 'POST':
         file = flask.request.files.get('file')
         filename = secure_filename(file.filename)
+        res = ''
+        img = ''
         if filename:
             basepath = os.path.dirname(__file__)
             upload_path = os.path.join(
@@ -409,15 +409,15 @@ def upfile():
             file.save(upload_path)
             if '.png' in filename:
                 filename = 'upload_file/{}'.format(filename)
-                return flask.render_template('file/files.html', img=flask.url_for('static', filename=filename))
+                img = flask.url_for('static', filename=filename)
             elif '.txt' in filename:
                 with open(upload_path, 'r') as f:
-                    data = f.read()
-                return flask.render_template('file/files.html', res=data)
+                    res = f.read()
             else:
-                return flask.render_template('file/files.html', res='文件格式暂不支持在线预览')
+                res = '文件格式暂不支持在线预览'
         else:
-            return flask.render_template('file/files.html', res='上传文件为空')
+            res = '上传文件为空'
+        return flask.render_template('file/files.html', res=res, img=img)
     elif flask.request.method == 'GET':
         return flask.render_template('file/files.html')
 
@@ -432,9 +432,12 @@ def books():
         userid = flask.session['id']
         book_data = select_book(userid)
         if book_data:
-            return flask.render_template('book/books.html', books=book_data)
+            books = book_data
+            res = ''
         else:
-            return flask.render_template('book/books.html', res='当前书籍信息为空')
+            books = ''
+            res = '当前书籍信息为空'
+        return flask.render_template('book/books.html', books=books, res='当前书籍信息为空')
 
 
 @app.route('/book/DELETE', methods=['GET'])
@@ -473,17 +476,23 @@ def update_book(wraps_res):
         return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=(id, name, author))
     elif flask.request.method == 'POST':
         if not re.findall("'(.*?)'", flask.request.form.get('data')):
-            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'), input='UnKnow Err')
-        id = re.findall("'(.*?)'", flask.request.form.get('data'))[0]
-        name = flask.request.form.get('name')
-        author = flask.request.form.get('author')
-        if wraps_res:
-            if update_book_info(id, name, author):
-                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=(id, name, author), input='修改成功')
-            else:
-                return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'), input='修改失败')
+            data = flask.request.form.get('data')
+            input = 'UnKnow Err'
         else:
-            return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=flask.request.form.get('data'), input='输入信息不能为空')
+            id = re.findall("'(.*?)'", flask.request.form.get('data'))[0]
+            name = flask.request.form.get('name')
+            author = flask.request.form.get('author')
+            if wraps_res:
+                if update_book_info(id, name, author):
+                    input = '修改成功'
+                    data = (id, name, author)
+                else:
+                    input = '修改失败'
+                    data = flask.request.form.get('data')
+            else:
+                input = '输入信息不能为空'
+                data = flask.request.form.get('data')
+        return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=data, input=input)
 
 
 @app.route('/book/ADD', methods=['GET', 'POST'])
@@ -502,11 +511,12 @@ def add_book(wraps_res):
             name = flask.request.form.get('name')
             author = flask.request.form.get('author')
             if add_book_info(flask.session['id'], name, author):
-                return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res='添加成功')
+                res = '添加成功'
             else:
-                return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res='添加失败')
+                res = '添加失败'
         else:
-            return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res='输入信息不能为空')
+            res = '输入信息不能为空'
+        return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res=res)
 
 
 if __name__ == '__main__':
