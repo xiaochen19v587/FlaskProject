@@ -36,7 +36,7 @@ def index():
     '''
         请求路由为/,返回register页面
     '''
-    if 'username' in flask.session:
+    if 'username' in flask.session and 'id' in flask.session:
         res = 'You are login'
     res = 'You are not logged in'
     return flask.render_template('index.html', name='', res=res)
