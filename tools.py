@@ -19,6 +19,48 @@ import mysql.connector
 import hashlib
 
 
+def select_mysql(sql, params_list):
+    '''
+        查询数据库信息
+        params: sql 执行的sql语句; parmas_list sql语句中的参数列表
+        return: data 如果执行sql语句没有报错,返回查询到的数据列表;否则返回加密过的encryption_string('select_data_err')
+    '''
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='info')
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, params_list)
+        data = cursor.fetchall()
+    except Exception as e:
+        print(e)
+        data = encryption_string('select_data_err')
+    cursor.close()
+    conn.close
+    return data
+
+
+def update_mysql(sql, params_list):
+    '''
+        更新数据库信息
+        params:sql 执行的sql语句; params_list sql语句中的参数列表
+        return:err sql语句执行成功返回None;执行失败返回Exception信息
+    '''
+    conn = mysql.connector.connect(
+        host='127.0.0.1', user='root', passwd='123123', database='info')
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, params_list)
+        conn.commit()
+        err = None
+    except Exception as e:
+        print(e)
+        err = e
+        conn.rollback()
+    cursor.close()
+    conn.close()
+    return err
+
+
 def check_input_wraps(params_list):
     '''
     装饰器:检验用户输入的参数是否为空
@@ -64,15 +106,12 @@ def check_user(username):
         params:username 用户输入的用户名
         return:0 已存在 1 不存在
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = "select id from students where name = %s"
-    cursor.execute(sql, [username])
-    user_counts = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    if user_counts:
+    params_list = [username]
+    data = select_mysql(sql, params_list)
+    if data == encryption_string('select_data_err'):
+        return 0
+    elif data:
         return 0
     else:
         return 1
@@ -99,27 +138,19 @@ def insert_db(name, age, password):
         params: name 用户输入的usernmae,age 用户输入的age, password 用户输入的password
         return: 0 插入数据失败 1 插入数据成功
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'insert into students (name,age,password) values (%s,%s,%s)'
-    try:
-        cursor.execute(sql, [name, age, password])
-        conn.commit()
+    params_list = [name, age, password]
+    err = update_mysql(sql, params_list)
+    if not err:
         sql = 'select id from students where name = %s'
-        cursor.execute(sql, [name])
-        id = cursor.fetchall()[0][0]
-        err = None
-    except Exception as e:
-        print(e)
-        conn.rollback()
-        err = e
-    cursor.close()
-    conn.close()
-    if err:
-        return (0, None)
+        params_list = [name]
+        data = select_mysql(sql, params_list)
+        if data == encryption_string('select_data_err'):
+            return (0, None)
+        elif data:
+            return (1, data[0][0])
     else:
-        return (1, id)
+        return (0, None)
 
 
 def check_user_pass(username, password):
@@ -128,22 +159,19 @@ def check_user_pass(username, password):
         params: username 用户输入的用户名, passwrod 用户输入的密码
         return: 1 用户名和密码匹配成功 0 用户名和密码匹配失败 2 当前用户已经注销
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'select password, isalive, id from students where name = %s'
-    try:
-        cursor.execute(sql, [username])
-        user_pass = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        if user_pass[0][0] == password and user_pass[0][1] == 0:
-            return (1, user_pass[0][2])
-        elif user_pass[0][1] == 1:
+    params_list = [username]
+    data = select_mysql(sql, params_list)
+    if data == encryption_string('select_data_err'):
+        return (0, None)
+    elif data:
+        if data[0][0] == password and data[0][1] == 0:
+            return (1, data[0][2])
+        elif data[0][1] == 1:
             return (2, None)
-        elif user_pass[0][0] != password:
+        elif data[0][0] != password:
             return (0, None)
-    except:
+    else:
         return (0, None)
 
 
@@ -159,38 +187,30 @@ def check_update_passwd(old_password, new_password1, new_password2):
         old_password = encryption_string(old_password)
         if encryption_string(new_password1) == old_password:
             # 新旧密码相同
-            print('...')
             res = '新密码不能和旧密码相同'
         else:
-            conn = mysql.connector.connect(
-                host='127.0.0.1', user='root', passwd='123123', database='info')
-            cursor = conn.cursor()
             sql = 'select password from students where name = %s'
-            try:
-                cursor.execute(sql, [flask.session['username']])
-                password = cursor.fetchall()[0][0]
+            params_list = [flask.session['username']]
+            data = select_mysql(sql, params_list)
+            if not data:
+                res = '查询用户失败'
+            elif data == encryption_string('select_data_err'):
+                res = 'UnKnow err'
+            else:
+                password = data[0][0]
                 if password == old_password:
                     # 修改密码
                     sql = 'update students set password = %s where name = %s'
-                    try:
-                        cursor.execute(sql, [encryption_string(
-                            new_password1), flask.session['username']])
-                        conn.commit()
-                    except Exception as e:
-                        print(e)
-                        # 修改密码失败
+                    params_list = [encryption_string(
+                        new_password1), flask.session['username']]
+                    err = update_mysql(sql, params_list)
+                    if err:
                         res = '修改密码失败'
                     else:
-                        res = '修改密码成功'
+                        res = 1
                 else:
                     # 密码不匹配
                     res = '旧密码输入不正确'
-                cursor.close()
-                conn.close()
-            except Exception as e:
-                print(e)
-                # 查询用户失败
-                res = '查询用户失败'
     return res
 
 
@@ -200,29 +220,16 @@ def update_cart(cartid, cartname, price):
         params:cartid cartid, cartname 用户输入的cartname, price 用户输入的price
         return:1修改成功 0 修改失败
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'select cartname,price from cartinfo where cartid=%s'
-    try:
-        cursor.execute(sql, [cartid])
-        data = cursor.fetchall()
-    except Exception as e:
-        print(e)
-        return 0
+    params_list = [cartid]
+    data = select_mysql(sql, params_list)
     if not data:
         return 0
+    elif data == encryption_string('select_data_err'):
+        return 0
     sql = 'update cartinfo set cartname=%s,price=%s where cartid=%s'
-    try:
-        cursor.execute(sql, [cartname, price, cartid])
-        conn.commit()
-        err = 1
-    except Exception as e:
-        print(e)
-        conn.rollback()
-        err = 0
-    cursor.close()
-    conn.close()
+    params_list = [cartname, price, cartid]
+    err = update_mysql(sql, params_list)
     return err
 
 
@@ -231,15 +238,13 @@ def select_book(userid):
         查找对应用户的书籍信息,根据用户的id查找到数据库中所有的书籍信息
         return:书籍信息
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'select id,name,author from books where studentid=%s'
-    cursor.execute(sql, [userid])
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return data
+    params_list = [userid]
+    data = select_mysql(sql, params_list)
+    if data == encryption_string('select_data_err'):
+        pass
+    elif data:
+        return data
 
 
 def update_book_info(id, name, author):
@@ -248,20 +253,9 @@ def update_book_info(id, name, author):
         params:id 书籍id;name 书籍名;author 作者
         return:1 修改成功 0 修改失败
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'update books set name=%s,author=%s where id=%s'
-    try:
-        cursor.execute(sql, [name, author, id])
-        conn.commit()
-        err = 1
-    except Exception as e:
-        print(e)
-        err = 0
-        conn.rollback()
-    cursor.close()
-    conn.close()
+    params_list = [name, author, id]
+    err = update_mysql(sql, params_list)
     return err
 
 
@@ -271,18 +265,7 @@ def add_book_info(studentid, name, author):
         params:studentid 当前登录用户id;name 书籍名;author 书籍作者
         return:1 添加成功 0 添加失败
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'insert into books (studentid,name,author) values (%s,%s,%s)'
-    try:
-        cursor.execute(sql, [studentid, name, author])
-        conn.commit()
-        err = 1
-    except Exception as e:
-        print(e)
-        conn.rollback()
-        err = 0
-    cursor.close()
-    conn.close()
+    params_list = [studentid, name, author]
+    err = update_mysql(sql, params_list)
     return err

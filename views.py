@@ -117,9 +117,9 @@ def login(wrap_res):
             password = flask.request.form.get('password', default=None)
             password = encryption_string(password)
             check_user_pass_res = check_user_pass(username, password)
-            id = check_user_pass_res[1]
             res = check_user_pass_res[0]
             if res == 1:
+                id = check_user_pass_res[1]
                 resp = flask.make_response(flask.redirect('/users'))
                 resp.set_cookie('username', username)
                 flask.session['username'] = username
@@ -152,17 +152,12 @@ def userinfo():
     '''
         验证权限之后跳转到用户页面,显示用户id,name,age,passwd
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'select * from students where name = %s'
-    try:
-        cursor.execute(sql, [flask.session['username']])
-        data = cursor.fetchall()
-        cursor.close()
-        conn.close()
+    params_list = [flask.session['username']]
+    data = select_mysql(sql, params_list)
+    if data:
         return flask.render_template('user/userinfo.html', id=data[0][0], name=data[0][1], age=data[0][2], password=data[0][3])
-    except:
+    else:
         return flask.redirect('/user/login')
 
 
@@ -173,6 +168,7 @@ def logout():
         用户退出,删除seesion中的username
     '''
     flask.session.pop('username', None)
+    flask.session.pop('id', None)
     return flask.redirect('/')
 
 
@@ -189,19 +185,11 @@ def shoppingcart(wraps_res):
         if wraps_res:
             cartname = flask.request.form.get('cartname', default=None)
             price = flask.request.form.get('price', default=None)
-            conn = mysql.connector.connect(
-                host='127.0.0.1', user='root', passwd='123123', database='info')
-            cursor = conn.cursor()
-            try:
-                sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
-                cursor.execute(sql, [flask.session['id'], cartname, price])
-                conn.commit()
-            except Exception as e:
-                print(e)
-                conn.rollback()
+            sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
+            params_list = [flask.session['id'], cartname, price]
+            err = update_mysql(sql, params_list)
+            if err:
                 return flask.render_template('cart/cart_info.html', res='添加失败')
-            cursor.close()
-            conn.close()
             res = '购物车添加成功'
         else:
             res = '输入信息不能为空'
@@ -218,19 +206,13 @@ def carts():
         return:返回carts页面,用于显示用户购物车信息
     '''
     user_id = flask.session['id']
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
-    try:
-        sql = 'select cartid,cartname,price from cartinfo where studentid = %s'
-        cursor.execute(sql, [user_id])
-        data = cursor.fetchall()
-    except Exception as e:
-        print(e)
-        return flask.render_template('cart/carts.html', res='查询信息失败')
-    cursor.close()
-    conn.close()
-    if data:
+    sql = 'select cartid,cartname,price from cartinfo where studentid = %s'
+    params_list = [user_id]
+    data = select_mysql(sql, params_list)
+    if data == encryption_string('select_data_err'):
+        res = '查询信息失败'
+        data = ''
+    elif data:
         res = '{}用户的购物车'.format(flask.session['username'])
         data = data
     else:
@@ -247,20 +229,12 @@ def logoff():
         return:重定向到首页(/)
     '''
     username = flask.session['username']
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
     sql = 'update students set isalive = 1 where name = %s'
-    try:
-        cursor.execute(sql, [username])
-        conn.commit()
-    except Exception as e:
-        print(e)
-        conn.rollback()
+    params_list = [username]
+    err = update_mysql(sql, params_list)
+    if err:
         return flask.render_template('user/login_success.html', res='注销失败')
-    cursor.close()
-    conn.close()
-    return flask.redirect('/user/logout')
+    return flask.redirect('/')
 
 
 @app.route('/cart/DELETE', methods=['GET'])
@@ -271,18 +245,11 @@ def delete_carts():
         return: 重定向到/carts
     '''
     cartid = flask.request.args.get('cartid', default=None)
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursor = conn.cursor()
-    try:
-        sql = 'delete from cartinfo where cartid = %s'
-        cursor.execute(sql, [cartid])
-        conn.commit()
-    except:
-        conn.rollback()
+    sql = 'delete from cartinfo where cartid = %s'
+    params_list = [cartid]
+    err = update_mysql(sql, params_list)
+    if err:
         return flask.render_template('cart/carts.html', res='删除失败')
-    cursor.close()
-    conn.close()
     return flask.redirect('/carts')
 
 
@@ -297,33 +264,23 @@ def update_userinfo(wraps_res):
     if flask.request.method == 'GET':
         return flask.render_template('user/update_info.html')
     elif flask.request.method == 'POST':
-        if not wraps_res:
-            return flask.render_template('user/update_info.html', res='输入信息不能为空')
-        username = flask.request.form.get('username', default=None)
-        if not check_user(username):
-            return flask.render_template('user/update_info.html', res='用户名已存在')
-        age = flask.request.form.get('age', default=None)
-        conn = mysql.connector.connect(
-            host='127.0.0.1', user='root', passwd='123123', database='info')
-        cursor = conn.cursor()
-        sql = 'select id from students where name = %s'
-        try:
-            cursor.execute(sql, [flask.session['username']])
-            id = cursor.fetchall()[0][0]
-        except Exception as e:
-            print(e)
-        sql = 'update students set name = %s, age = %s where id =%s'
-        try:
-            cursor.execute(sql, [username, age, id])
-            conn.commit()
-        except Exception as e:
-            print(e)
-            conn.rollback()
-            return flask.render_template('user/update_info.html', res='请输入正确的信息')
-        cursor.close()
-        conn.close()
-        flask.session['username'] = username
-        return flask.redirect('/user/info')
+        if wraps_res:
+            username = flask.request.form.get('username', default=None)
+            if check_user(username):
+                age = flask.request.form.get('age', default=None)
+                sql = 'update students set name = %s, age = %s where id =%s'
+                params_list = [username, age, flask.session['id']]
+                err = update_mysql(sql, params_list)
+                if not err:
+                    flask.session['username'] = username
+                    return flask.redirect('/user/info')
+                else:
+                    res = '修改失败'
+            else:
+                res = '用户名已存在'
+        else:
+            res = '输入信息不能为空'
+        return flask.render_template('user/update_info.html', res=res)
 
 
 @app.route('/user/UPDATE/password', methods=['GET', 'POST'])
@@ -348,7 +305,10 @@ def update_passwd(wraps_res):
             res = check_update_res
         else:
             res = '输入信息不能为空'
-        return flask.render_template('user/update_passwd.html', res=res)
+        if res == 1:
+            return flask.redirect('/user/login')
+        else:
+            return flask.render_template('user/update_passwd.html', res=res)
 
 
 @app.route('/cart/UPDATE', methods=['GET', 'POST'])
@@ -370,7 +330,7 @@ def cart_update(wraps_res):
             cartname = flask.request.form.get('cartname', default=None)
             price = flask.request.form.get('price', default=None)
             cartid = re.findall(':(.*?),', cartinfo)[0]
-            if update_cart(cartid, cartname, price):
+            if not update_cart(cartid, cartname, price):
                 cartinfo = '当前商品信息:{}, {}, {}'.format(cartid, cartname, price)
                 res = '修改成功'
             else:
@@ -449,18 +409,11 @@ def delete_book():
     '''
         删除书籍,根据选中书籍id删除数据库中的书籍信息
     '''
-    conn = mysql.connector.connect(
-        host='127.0.0.1', user='root', passwd='123123', database='info')
-    cursur = conn.cursor()
     sql = 'delete from books where id = %s'
-    try:
-        cursur.execute(sql, [flask.request.args.get('id')])
-        conn.commit()
-    except Exception as e:
-        print(e)
-        conn.rollback()
-    cursur.close()
-    conn.close()
+    params_list = [flask.request.args.get('id')]
+    err = update_mysql(sql, params_list)
+    if err:
+        return flask.render_template('book/books.html', res='删除失败')
     return flask.redirect('/books')
 
 
@@ -486,7 +439,7 @@ def update_book(wraps_res):
             name = flask.request.form.get('name')
             author = flask.request.form.get('author')
             if wraps_res:
-                if update_book_info(id, name, author):
+                if not update_book_info(id, name, author):
                     input = '修改成功'
                     data = (id, name, author)
                 else:
@@ -513,7 +466,7 @@ def add_book(wraps_res):
         if wraps_res:
             name = flask.request.form.get('name')
             author = flask.request.form.get('author')
-            if add_book_info(flask.session['id'], name, author):
+            if not add_book_info(flask.session['id'], name, author):
                 res = '添加成功'
             else:
                 res = '添加失败'
