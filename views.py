@@ -20,10 +20,8 @@
 /book/ADD               GET:返回book_info.html页面                      POST:处理用户输入信息,将书籍信息添加进数据库中
 '''
 import flask
-import mysql.connector
 import re
 import os
-import json
 from tools import *
 from werkzeug.utils import secure_filename
 
