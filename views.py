@@ -152,7 +152,7 @@ def userinfo():
     '''
         验证权限之后跳转到用户页面,显示用户id,name,age,passwd
     '''
-    sql = 'select * from students where name = %s'
+    sql = 'select * from users where name = %s'
     params_list = [flask.session['username']]
     data = select_mysql(sql, params_list)
     if data:
@@ -185,7 +185,7 @@ def shoppingcart(wraps_res):
         if wraps_res:
             cartname = flask.request.form.get('cartname', default=None)
             price = flask.request.form.get('price', default=None)
-            sql = 'insert into cartinfo (studentid,cartname,price) values (%s,%s,%s)'
+            sql = 'insert into carts (userid,cartname,price) values (%s,%s,%s)'
             params_list = [flask.session['id'], cartname, price]
             err = update_mysql(sql, params_list)
             if err:
@@ -206,7 +206,7 @@ def carts():
         return:返回carts页面,用于显示用户购物车信息
     '''
     user_id = flask.session['id']
-    sql = 'select cartid,cartname,price from cartinfo where studentid = %s'
+    sql = 'select cartid,cartname,price from carts where userid = %s'
     params_list = [user_id]
     data = select_mysql(sql, params_list)
     if data == encryption_string('select_data_err'):
@@ -229,7 +229,7 @@ def logoff():
         return:重定向到首页(/)
     '''
     username = flask.session['username']
-    sql = 'update students set isalive = 1 where name = %s'
+    sql = 'update users set isalive = 1 where name = %s'
     params_list = [username]
     err = update_mysql(sql, params_list)
     if err:
@@ -245,7 +245,7 @@ def delete_carts():
         return: 重定向到/carts
     '''
     cartid = flask.request.args.get('cartid', default=None)
-    sql = 'delete from cartinfo where cartid = %s'
+    sql = 'delete from carts where cartid = %s'
     params_list = [cartid]
     err = update_mysql(sql, params_list)
     if err:
@@ -259,7 +259,7 @@ def delete_carts():
 def update_userinfo(wraps_res):
     '''
         修改用户信息,验证用户输入信息,get请求返回update_info.html,post请求修改用户信息
-        return: 重定向到students
+        return: 重定向到/user/info
     '''
     if flask.request.method == 'GET':
         return flask.render_template('user/update_info.html')
@@ -268,7 +268,7 @@ def update_userinfo(wraps_res):
             username = flask.request.form.get('username', default=None)
             if check_user(username):
                 age = flask.request.form.get('age', default=None)
-                sql = 'update students set name = %s, age = %s where id =%s'
+                sql = 'update users set name = %s, age = %s where id =%s'
                 params_list = [username, age, flask.session['id']]
                 err = update_mysql(sql, params_list)
                 if not err:
@@ -323,23 +323,23 @@ def cart_update(wraps_res):
         cartid = flask.request.args.get('cartid', default=None)
         cartname = flask.request.args.get('cartname', default=None)
         price = flask.request.args.get('price', default=None)
-        return flask.render_template('cart/cart_update.html', cartinfo='当前商品信息:{}, {}, {}'.format(cartid, cartname, price))
+        return flask.render_template('cart/cart_update.html', carts='当前商品信息:{}, {}, {}'.format(cartid, cartname, price))
     if flask.request.method == 'POST':
         if wraps_res:
-            cartinfo = flask.request.form.get('cartinfo', default=None)
+            carts = flask.request.form.get('carts', default=None)
             cartname = flask.request.form.get('cartname', default=None)
             price = flask.request.form.get('price', default=None)
-            cartid = re.findall(':(.*?),', cartinfo)[0]
+            cartid = re.findall(':(.*?),', carts)[0]
             if not update_cart(cartid, cartname, price):
-                cartinfo = '当前商品信息:{}, {}, {}'.format(cartid, cartname, price)
+                carts = '当前商品信息:{}, {}, {}'.format(cartid, cartname, price)
                 res = '修改成功'
             else:
-                cartinfo = cartinfo
+                carts = carts
                 res = '修改失败'
         else:
-            cartinfo = flask.request.form.get('cartinfo')
+            carts = flask.request.form.get('carts')
             res = '当前输入信息为空'
-        return flask.render_template('cart/cart_update.html', cartinfo=cartinfo, res=res)
+        return flask.render_template('cart/cart_update.html', carts=carts, res=res)
 
 
 @app.route('/files', methods=['GET', 'POST'])

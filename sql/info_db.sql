@@ -24,12 +24,12 @@ DROP TABLE IF EXISTS `books`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `books` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `studentid` int(11) NOT NULL,
+  `userid` int(11) NOT NULL,
   `name` char(20) NOT NULL,
   `author` char(20) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `fk_student_book` (`studentid`),
-  CONSTRAINT `fk_student_book` FOREIGN KEY (`studentid`) REFERENCES `students` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `fk_student_book` (`userid`),
+  CONSTRAINT `fk_student_book` FOREIGN KEY (`userid`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -44,41 +44,41 @@ INSERT INTO `books` VALUES (7,46,'钢铁是怎样炼成的','尼·奥斯特洛�
 UNLOCK TABLES;
 
 --
--- Table structure for table `cartinfo`
+-- Table structure for table `carts`
 --
 
-DROP TABLE IF EXISTS `cartinfo`;
+DROP TABLE IF EXISTS `carts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `cartinfo` (
-  `studentid` int(11) NOT NULL,
+CREATE TABLE `carts` (
+  `userid` int(11) NOT NULL,
   `cartname` char(10) NOT NULL,
   `price` int(11) NOT NULL,
   `cartid` int(11) NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`cartid`),
-  KEY `students_id` (`studentid`),
-  CONSTRAINT `students_id` FOREIGN KEY (`studentid`) REFERENCES `students` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `users_id` (`userid`),
+  CONSTRAINT `users_id` FOREIGN KEY (`userid`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `cartinfo`
+-- Dumping data for table `carts`
 --
 
-LOCK TABLES `cartinfo` WRITE;
-/*!40000 ALTER TABLE `cartinfo` DISABLE KEYS */;
-INSERT INTO `cartinfo` VALUES (46,'辣条',10,44),(46,'辣条',5,46),(46,'辣条',12,47),(45,'辣条',123,48);
-/*!40000 ALTER TABLE `cartinfo` ENABLE KEYS */;
+LOCK TABLES `carts` WRITE;
+/*!40000 ALTER TABLE `carts` DISABLE KEYS */;
+INSERT INTO `carts` VALUES (46,'辣条',10,44),(46,'辣条',5,46),(46,'辣条',12,47),(45,'辣条',123,48);
+/*!40000 ALTER TABLE `carts` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
--- Table structure for table `students`
+-- Table structure for table `users`
 --
 
-DROP TABLE IF EXISTS `students`;
+DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `students` (
+CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` char(20) DEFAULT NULL,
   `age` int(11) NOT NULL,
@@ -89,13 +89,13 @@ CREATE TABLE `students` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `students`
+-- Dumping data for table `users`
 --
 
-LOCK TABLES `students` WRITE;
-/*!40000 ALTER TABLE `students` DISABLE KEYS */;
-INSERT INTO `students` VALUES (32,'123',12,'3d9f0af340b84a2c3a8779ede2277e91',1),(33,'1234',23,'f30d2596e3ff16397fa5f0a231363b48',1),(35,'xiaochen',23,'a85b621f8fe765d7ec00ba2cd5d880a5',1),(36,'xiaochen19v587',23,'6573492867218b5947fdc2d6b6915b7e',1),(37,'12',23,'f424627c29c821c5b1c992d16a32683b',1),(40,'qwe',23,'59d078ddf470d4c27c91f341924e5cc1',1),(41,'4321',23,'8ec9da076be489c6fb027636d1b2e847',1),(43,'234',23,'795de1f011008bfdc4b992aa9034de9e',1),(44,'23',23,'f662f10942036a5ddbede9337b7172e5',1),(45,'zxc',23,'d916c5b386f9593373a8e38284835ed0',0),(46,'bnm',12,'2b7dcf32dba7e94931376a2f6c8bd9a6',0),(47,'hjk',12,'034e29cac24e1bdfcb9008f925d8bb6c',0),(48,'iop',12,'b0d5582c0e75b2c86fcf9f72df63df1a',0),(50,'test_',21,'b003657345d151d39f3a6496290caf5b',1),(51,'t test',21,'c5b3411c06792da0f44556981c8337cf',0),(52,'fgh',21,'36f6022965a7729725c541112c11336b',0),(53,'sdf',21,'660a6d6024dd32fc89a2f9e5ce0d80ca',0);
-/*!40000 ALTER TABLE `students` ENABLE KEYS */;
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (32,'123',12,'3d9f0af340b84a2c3a8779ede2277e91',1),(33,'1234',23,'f30d2596e3ff16397fa5f0a231363b48',1),(35,'xiaochen',23,'a85b621f8fe765d7ec00ba2cd5d880a5',1),(36,'xiaochen19v587',23,'6573492867218b5947fdc2d6b6915b7e',1),(37,'12',23,'f424627c29c821c5b1c992d16a32683b',1),(40,'qwe',23,'59d078ddf470d4c27c91f341924e5cc1',1),(41,'4321',23,'8ec9da076be489c6fb027636d1b2e847',1),(43,'234',23,'795de1f011008bfdc4b992aa9034de9e',1),(44,'23',23,'f662f10942036a5ddbede9337b7172e5',1),(45,'zxc',23,'d916c5b386f9593373a8e38284835ed0',0),(46,'bnm',12,'2b7dcf32dba7e94931376a2f6c8bd9a6',0),(47,'hjk',12,'034e29cac24e1bdfcb9008f925d8bb6c',0),(48,'iop',12,'b0d5582c0e75b2c86fcf9f72df63df1a',0),(50,'test_',21,'b003657345d151d39f3a6496290caf5b',1),(51,'t test',21,'c5b3411c06792da0f44556981c8337cf',0),(52,'fgh',21,'36f6022965a7729725c541112c11336b',0),(53,'sdf',21,'660a6d6024dd32fc89a2f9e5ce0d80ca',0);
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

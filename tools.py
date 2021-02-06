@@ -106,7 +106,7 @@ def check_user(username):
         params:username 用户输入的用户名
         return:0 已存在 1 不存在
     '''
-    sql = "select id from students where name = %s"
+    sql = "select id from users where name = %s"
     params_list = [username]
     data = select_mysql(sql, params_list)
     if data == encryption_string('select_data_err'):
@@ -138,11 +138,11 @@ def insert_db(name, age, password):
         params: name 用户输入的usernmae,age 用户输入的age, password 用户输入的password
         return: 0 插入数据失败 1 插入数据成功
     '''
-    sql = 'insert into students (name,age,password) values (%s,%s,%s)'
+    sql = 'insert into users (name,age,password) values (%s,%s,%s)'
     params_list = [name, age, password]
     err = update_mysql(sql, params_list)
     if not err:
-        sql = 'select id from students where name = %s'
+        sql = 'select id from users where name = %s'
         params_list = [name]
         data = select_mysql(sql, params_list)
         if data == encryption_string('select_data_err'):
@@ -159,7 +159,7 @@ def check_user_pass(username, password):
         params: username 用户输入的用户名, passwrod 用户输入的密码
         return: 1 用户名和密码匹配成功 0 用户名和密码匹配失败 2 当前用户已经注销
     '''
-    sql = 'select password, isalive, id from students where name = %s'
+    sql = 'select password, isalive, id from users where name = %s'
     params_list = [username]
     data = select_mysql(sql, params_list)
     if data == encryption_string('select_data_err'):
@@ -189,7 +189,7 @@ def check_update_passwd(old_password, new_password1, new_password2):
             # 新旧密码相同
             res = '新密码不能和旧密码相同'
         else:
-            sql = 'select password from students where name = %s'
+            sql = 'select password from users where name = %s'
             params_list = [flask.session['username']]
             data = select_mysql(sql, params_list)
             if not data:
@@ -200,7 +200,7 @@ def check_update_passwd(old_password, new_password1, new_password2):
                 password = data[0][0]
                 if password == old_password:
                     # 修改密码
-                    sql = 'update students set password = %s where name = %s'
+                    sql = 'update users set password = %s where name = %s'
                     params_list = [encryption_string(
                         new_password1), flask.session['username']]
                     err = update_mysql(sql, params_list)
@@ -220,14 +220,14 @@ def update_cart(cartid, cartname, price):
         params:cartid cartid, cartname 用户输入的cartname, price 用户输入的price
         return:1修改成功 0 修改失败
     '''
-    sql = 'select cartname,price from cartinfo where cartid=%s'
+    sql = 'select cartname,price from carts where cartid=%s'
     params_list = [cartid]
     data = select_mysql(sql, params_list)
     if not data:
         return 0
     elif data == encryption_string('select_data_err'):
         return 0
-    sql = 'update cartinfo set cartname=%s,price=%s where cartid=%s'
+    sql = 'update carts set cartname=%s,price=%s where cartid=%s'
     params_list = [cartname, price, cartid]
     err = update_mysql(sql, params_list)
     return err
@@ -238,7 +238,7 @@ def select_book(userid):
         查找对应用户的书籍信息,根据用户的id查找到数据库中所有的书籍信息
         return:书籍信息
     '''
-    sql = 'select id,name,author from books where studentid=%s'
+    sql = 'select id,name,author from books where userid=%s'
     params_list = [userid]
     data = select_mysql(sql, params_list)
     if data == encryption_string('select_data_err'):
@@ -259,13 +259,13 @@ def update_book_info(id, name, author):
     return err
 
 
-def add_book_info(studentid, name, author):
+def add_book_info(userid, name, author):
     '''
         接收数据,将数据添加到数据库中
-        params:studentid 当前登录用户id;name 书籍名;author 书籍作者
+        params:userid 当前登录用户id;name 书籍名;author 书籍作者
         return:1 添加成功 0 添加失败
     '''
-    sql = 'insert into books (studentid,name,author) values (%s,%s,%s)'
-    params_list = [studentid, name, author]
+    sql = 'insert into books (userid,name,author) values (%s,%s,%s)'
+    params_list = [userid, name, author]
     err = update_mysql(sql, params_list)
     return err
