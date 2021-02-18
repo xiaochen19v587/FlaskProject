@@ -38,8 +38,11 @@ def index():
     '''
     if 'username' in flask.session and 'id' in flask.session:
         res = 'You are login'
-    res = 'You are not logged in'
-    return flask.render_template('index.html', name='', res=res)
+        name = '{},'.format(flask.session['username'])
+    else:
+        res = 'You are not logged in'
+        name = ''
+    return flask.render_template('index.html', name=name, res=res)
 
 
 @app.errorhandler(404)
