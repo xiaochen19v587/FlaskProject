@@ -9,7 +9,7 @@ Ubuntu 16.04
 ### python依赖
 
 ```python
-Name	   Version
+ Name	    Version
 python	 	3.5.2
 flask    	1.1.2
 ```
