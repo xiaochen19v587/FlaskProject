@@ -399,7 +399,7 @@ def books():
         book_data = select_book(userid)
         if book_data:
             books = book_data
-            res = ''
+            res = '{}用户的书籍信息:'.format(flask.session['username'])
         else:
             books = ''
             res = '当前书籍信息为空'
