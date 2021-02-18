@@ -63,8 +63,8 @@ def update_mysql(sql, params_list):
 
 def check_input_wraps(params_list):
     '''
-    装饰器:检验用户输入的参数是否为空
-    return: 1 检验成功 0 检验失败
+        装饰器:检验用户输入的参数是否为空
+        return: 1 检验成功 0 检验失败
     '''
     def wrapper(func):
         @wraps(func)
