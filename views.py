@@ -403,7 +403,7 @@ def books():
         else:
             books = ''
             res = '当前书籍信息为空'
-        return flask.render_template('book/books.html', books=books, res='当前书籍信息为空')
+        return flask.render_template('book/books.html', books=books, res=res)
 
 
 @app.route('/book/DELETE', methods=['GET'])
@@ -436,22 +436,22 @@ def update_book(wraps_res):
     elif flask.request.method == 'POST':
         if not re.findall("'(.*?)'", flask.request.form.get('data')):
             data = flask.request.form.get('data')
-            input = 'UnKnow Err'
+            input_res = 'UnKnow Err'
         else:
             id = re.findall("'(.*?)'", flask.request.form.get('data'))[0]
             name = flask.request.form.get('name')
             author = flask.request.form.get('author')
             if wraps_res:
                 if not update_book_info(id, name, author):
-                    input = '修改成功'
+                    input_res = '修改成功'
                     data = (id, name, author)
                 else:
-                    input = '修改失败'
+                    input_res = '修改失败'
                     data = flask.request.form.get('data')
             else:
-                input = '输入信息不能为空'
+                input_res = '输入信息不能为空'
                 data = flask.request.form.get('data')
-        return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=data, input=input)
+        return flask.render_template('book/book_update.html', res='{}用户的书籍信息'.format(flask.session['username']), data=data, input=input_res)
 
 
 @app.route('/book/ADD', methods=['GET', 'POST'])
