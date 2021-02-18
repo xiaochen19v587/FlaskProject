@@ -93,7 +93,7 @@ def check_power(func):
     '''
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if 'username' in flask.session:
+        if 'username' in flask.session and 'id' in flask.session:
             return func(*args, **kwargs)
         else:
             return flask.redirect('/user/login')
