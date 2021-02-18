@@ -235,6 +235,8 @@ def logoff():
     err = update_mysql(sql, params_list)
     if err:
         return flask.render_template('user/login_success.html', res='注销失败')
+    flask.session.pop('username', None)
+    flask.session.pop('id', None)
     return flask.redirect('/')
 
 
