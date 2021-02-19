@@ -48,7 +48,7 @@ def index():
 @app.errorhandler(404)
 def page_not_found(e):
     '''
-        错误页面
+        404错误页面
     '''
     return flask.render_template('error/404.html'), 404
 
@@ -56,7 +56,7 @@ def page_not_found(e):
 @app.errorhandler(500)
 def server_internal_error(e):
     '''
-        错误页面
+        505错误页面
     '''
     return flask.render_template('error/500.html'), 500
 
@@ -64,7 +64,7 @@ def server_internal_error(e):
 @app.errorhandler(405)
 def method_not_found(e):
     '''
-        错误页面
+        405错误页面
     '''
     return flask.render_template('error/405.html'), 405
 
