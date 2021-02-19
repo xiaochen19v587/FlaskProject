@@ -10,8 +10,8 @@ Ubuntu 16.04
 
 ```python
  Name	    Version
-python	 	3.5.2
-flask    	1.1.2
+python    3.5.2
+flask    1.1.2
 requests    2.9.1
 ```
 
