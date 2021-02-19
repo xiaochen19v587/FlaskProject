@@ -12,6 +12,7 @@ Ubuntu 16.04
  Name	    Version
 python	 	3.5.2
 flask    	1.1.2
+requests    2.9.1
 ```
 
 ### Mysql数据库

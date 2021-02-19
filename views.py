@@ -24,6 +24,7 @@ import re
 import os
 from tools import *
 from werkzeug.utils import secure_filename
+from spiders import *
 
 app = flask.Flask(__name__)
 app.debug = True
@@ -397,6 +398,7 @@ def books():
     if flask.request.method == 'GET':
         userid = flask.session['id']
         book_data = select_book(userid)
+        print(book_data)
         if book_data:
             books = book_data
             res = '{}用户的书籍信息:'.format(flask.session['username'])
@@ -476,6 +478,26 @@ def add_book(wraps_res):
         else:
             res = '输入信息不能为空'
         return flask.render_template('book/book_info.html', info='{}用户书籍信息'.format(flask.session['username']), res=res)
+
+
+@app.route('/weibo', methods=['GET'])
+@check_power
+def weibo():
+    '''
+        微博热搜,返回weibo/weibo.html页面,调用spiders.py中的spi_weibo函数对微博热搜榜进行爬去生成列表
+        return:返回对应页面和hot_data
+    '''
+    hot_data = []
+    hot_list = spi_weibo()
+    if hot_list:
+        for i in range(4, len(hot_list)-11):
+            hot_url = hot_list[i][0].split(' ')[0]
+            hot_url = 'https://s.weibo.com'+hot_url[1:-1]
+            hot_name = hot_list[i][1]
+            hot_data.append((hot_url,hot_name))
+        return flask.render_template('weibo/weibo.html',res='微博热搜' ,hot_data=hot_data)
+    else:
+        return flask.render_template('weibo/weibo.html',res='结果为空')
 
 
 if __name__ == '__main__':
