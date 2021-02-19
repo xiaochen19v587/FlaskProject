@@ -399,7 +399,6 @@ def books():
     if flask.request.method == 'GET':
         userid = flask.session['id']
         book_data = select_book(userid)
-        print(book_data)
         if book_data:
             books = book_data
             res = '{}用户的书籍信息:'.format(flask.session['username'])
