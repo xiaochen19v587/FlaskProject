@@ -18,6 +18,7 @@
 /book/DELETE            GET:删除用户书籍信息
 /book/UPDATE            GET:返回book_update.html页面                    POST:处理用户输入信息,对书籍数据进行修改
 /book/ADD               GET:返回book_info.html页面                      POST:处理用户输入信息,将书籍信息添加进数据库中
+/weibo                  GET:返回weibo.html页面
 '''
 import flask
 import re
