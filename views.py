@@ -488,7 +488,8 @@ def weibo():
         return:返回对应页面和hot_data
     '''
     hot_data = []
-    hot_list = spi_weibo()
+    url = 'https://s.weibo.com/top/summary'
+    hot_list = spi_weibo(url)
     if hot_list:
         for i in range(4, len(hot_list)-11):
             hot_url = hot_list[i][0].split(' ')[0]

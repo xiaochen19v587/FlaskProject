@@ -15,11 +15,10 @@ headers = {
     'User-Agent': headers_list[random.randint(0, len(headers_list)-1)]
 }
 
-def spi_weibo():
+def spi_weibo(url):
     '''
         对微博热搜进行爬去,返回热搜名称和热搜url列表
     '''
-    url = 'https://s.weibo.com/top/summary'
     html = requests.get(url, headers=headers).text
     html_param = '<a href=(.*?)>(.*?)</a>'
     res_list = re.findall(html_param, html)
