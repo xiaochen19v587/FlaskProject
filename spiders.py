@@ -29,4 +29,7 @@ def spi_weibo(url):
     html = requests.get(url, headers=headers).text
     html_param = '<a href=(.*?)>(.*?)</a>'
     res_list = re.findall(html_param, html)
-    return res_list
+    if res_list:
+        return res_list
+    else:
+        return None
