@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+spi_weibo   函数,爬去微博热搜链接和热搜名
+'''
 import requests
 import random
 import re
