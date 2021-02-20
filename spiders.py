@@ -18,6 +18,8 @@ headers = {
 def spi_weibo(url):
     '''
         对微博热搜进行爬去,返回热搜名称和热搜url列表
+        params:url 爬去目标的url
+        return:热搜链接和热搜名组成的列表
     '''
     html = requests.get(url, headers=headers).text
     html_param = '<a href=(.*?)>(.*?)</a>'
