@@ -38,12 +38,20 @@ def index():
     '''
         请求路由为/,返回register页面
     '''
-    if 'username' in flask.session and 'id' in flask.session:
-        res = 'You are login'
-        name = '{},'.format(flask.session['username'])
+    if flask.request.cookies.get('username'):
+        if 'username' in flask.session and 'id' in flask.session:
+            res = 'You are login'
+            name = '{},'.format(flask.session['username'])
+        else:
+            res = 'You are not logged in'
+            name = ''
     else:
-        res = 'You are not logged in'
-        name = ''
+        if 'username' in flask.session and 'id' in flask.session:
+            res = "The login has expired"
+            name = ''
+        else:
+            res = 'You are not logged in'
+            name = ''
     return flask.render_template('index.html', name=name, res=res)
 
 
@@ -91,7 +99,7 @@ def register(wrap_res):
                 insert_db_res = insert_db(username, age, password)
                 if insert_db_res[0] == 1:
                     resp = flask.make_response(flask.redirect('/users'))
-                    resp.set_cookie('username', username)
+                    resp.set_cookie('username', username, max_age=3600)
                     flask.session['username'] = username
                     flask.session['id'] = insert_db_res[1]
                     return resp
@@ -124,7 +132,7 @@ def login(wrap_res):
             if res == 1:
                 id = check_user_pass_res[1]
                 resp = flask.make_response(flask.redirect('/users'))
-                resp.set_cookie('username', username)
+                resp.set_cookie('username', username, max_age=3600)
                 flask.session['username'] = username
                 flask.session['id'] = id
                 return resp
@@ -172,7 +180,9 @@ def logout():
     '''
     flask.session.pop('username', None)
     flask.session.pop('id', None)
-    return flask.redirect('/')
+    resp = flask.make_response(flask.redirect('/'))
+    resp.delete_cookie('username')
+    return resp
 
 
 @app.route('/cart/ADD', methods=['GET', 'POST'])
@@ -495,10 +505,10 @@ def weibo():
             hot_url = hot_list[i][0].split(' ')[0]
             hot_url = 'https://s.weibo.com'+hot_url[1:-1]
             hot_name = hot_list[i][1]
-            hot_data.append((hot_url,hot_name))
-        return flask.render_template('weibo/weibo.html',res='微博热搜' ,hot_data=hot_data)
+            hot_data.append((hot_url, hot_name))
+        return flask.render_template('weibo/weibo.html', res='微博热搜', hot_data=hot_data)
     else:
-        return flask.render_template('weibo/weibo.html',res='结果为空')
+        return flask.render_template('weibo/weibo.html', res='结果为空')
 
 
 if __name__ == '__main__':
