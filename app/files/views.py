@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 from app.tools import *
 
 
-
 @files.route('/files', methods=['GET', 'POST'])
 @check_power
 def file():
@@ -31,24 +30,21 @@ def upfile():
     '''
     if flask.request.method == 'POST':
         file = flask.request.files.get('file')
-        filename = secure_filename(file.filename)
         res = ''
-        img = ''
+        try:
+            filename = '{}{}'.format(
+                flask.session['username'], secure_filename(file.filename))
+            print(filename)
+        except Exception as e:
+            return flask.render_template('file/files.html', res='上传文件不能为空')
         if filename:
             basepath = os.path.dirname(__file__)
             upload_path = os.path.join(
                 basepath, 'static/upload_file', filename)
             file.save(upload_path)
-            if '.png' in filename:
-                filename = 'upload_file/{}'.format(filename)
-                img = flask.url_for('static', filename=filename)
-            elif '.txt' in filename:
-                with open(upload_path, 'r') as f:
-                    res = f.read()
-            else:
-                res = '文件格式暂不支持在线预览'
+            res = '上传成功'
         else:
             res = '上传文件为空'
-        return flask.render_template('file/files.html', res=res, img=img)
+        return flask.render_template('file/files.html', res=res)
     elif flask.request.method == 'GET':
         return flask.render_template('file/files.html')
