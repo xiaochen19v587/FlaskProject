@@ -42,7 +42,7 @@ def upfile():
             upload_path = os.path.join(
                 basepath, 'static/upload_file', filename)
             file.save(upload_path)
-            res = '上传成功'
+            res = '文件上传成功'
         else:
             res = '上传文件为空'
         return flask.render_template('file/files.html', res=res)
